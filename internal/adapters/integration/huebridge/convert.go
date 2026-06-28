@@ -16,7 +16,9 @@
 
 package huebridge
 
-import "github.com/tdrn-org/go-hue/api"
+import (
+	"github.com/tdrn-org/go-hue/api"
+)
 
 func brightnessValue(response *api.Brightness) uint8 {
 	if response == nil {

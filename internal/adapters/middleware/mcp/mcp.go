@@ -282,7 +282,11 @@ func formatSensorsText(sensors []*smarthome.Sensor) string {
 	}
 	result += "\n"
 	for _, s := range sensors {
-		result += fmt.Sprintf("  %-30s %-12s %.1f°C\n", s.Name, s.Type, s.Temperature)
+		battery := ""
+		if s.BatteryLevel >= 0 {
+			battery = fmt.Sprintf(" 🔋%d%%", s.BatteryLevel)
+		}
+		result += fmt.Sprintf("  %-30s %-12s %5.1f°C%s\n", s.Name, s.Type, s.Temperature, battery)
 	}
 	return result
 }

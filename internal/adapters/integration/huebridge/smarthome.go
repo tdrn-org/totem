@@ -107,6 +107,7 @@ func (s *huebridgeService) ListSensors(ctx context.Context) ([]*smarthome.Sensor
 	}
 	location := s.host.ResolveLocationID(s.config.LocationID())
 	deviceNames := s.resolveDeviceNames(ctx, bridgeClient)
+	batteryLevels := s.resolveBatteryLevels(ctx, bridgeClient)
 
 	response, err := bridgeClient.GetTemperatures(ctx)
 	if err != nil {
@@ -119,12 +120,14 @@ func (s *huebridgeService) ListSensors(ctx context.Context) ([]*smarthome.Sensor
 		if t.Temperature.TemperatureReport != nil && t.Temperature.TemperatureReport.Temperature != nil {
 			temp = float64(*t.Temperature.TemperatureReport.Temperature)
 		}
+		battery := batteryLevels[t.Owner.Rid]
 		sensor := &smarthome.Sensor{
-			ID:          t.Id,
-			Name:        deviceName(deviceNames, t.Owner.Rid, t.Id),
-			Type:        "temperature",
-			Temperature: temp,
-			Location:    location,
+			ID:           t.Id,
+			Name:         deviceName(deviceNames, t.Owner.Rid, t.Id),
+			Type:         "temperature",
+			Temperature:  temp,
+			BatteryLevel: battery,
+			Location:     location,
 		}
 		sensors = append(sensors, sensor)
 	}
@@ -146,17 +149,19 @@ func (s *huebridgeService) GetSensor(ctx context.Context, id string) (*smarthome
 		return nil, fmt.Errorf("no temperature data from Hue Bridge")
 	}
 	deviceNames := s.resolveDeviceNames(ctx, bridgeClient)
+	batteryLevels := s.resolveBatteryLevels(ctx, bridgeClient)
 	t := response.JSON200.Data[0]
 	temp := float64(t.Temperature.Temperature)
 	if t.Temperature.TemperatureReport != nil && t.Temperature.TemperatureReport.Temperature != nil {
 		temp = float64(*t.Temperature.TemperatureReport.Temperature)
 	}
 	return &smarthome.Sensor{
-		ID:          t.Id,
-		Name:        deviceName(deviceNames, t.Owner.Rid, t.Id),
-		Type:        "temperature",
-		Temperature: temp,
-		Location:    location,
+		ID:           t.Id,
+		Name:         deviceName(deviceNames, t.Owner.Rid, t.Id),
+		Type:         "temperature",
+		Temperature:  temp,
+		BatteryLevel: batteryLevels[t.Owner.Rid],
+		Location:     location,
 	}, nil
 }
 
@@ -170,6 +175,20 @@ func (s *huebridgeService) resolveDeviceNames(ctx context.Context, client hue.Br
 		names[d.Id] = d.Metadata.Name
 	}
 	return names
+}
+
+func (s *huebridgeService) resolveBatteryLevels(ctx context.Context, client hue.BridgeClient) map[string]int {
+	levels := make(map[string]int)
+	response, err := client.GetDevicePowers(ctx)
+	if err != nil {
+		return levels
+	}
+	for _, dp := range response.JSON200.Data {
+		if dp.PowerState.BatteryLevel != nil {
+			levels[dp.Owner.Rid] = *dp.PowerState.BatteryLevel
+		}
+	}
+	return levels
 }
 
 func deviceName(names map[string]string, ownerRID, fallback string) string {
