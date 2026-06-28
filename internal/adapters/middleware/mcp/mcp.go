@@ -58,6 +58,7 @@ func NewHandler(runtime Runtime) http.Handler {
 }
 
 func registerSmarthomeTools(server *mcp.Server, runtime Runtime) {
+	var services []smarthome.SmarthomeService
 	for _, service := range runtime.Services() {
 		for _, nature := range service.Natures() {
 			if nature != integration.NatureSmarthome {
@@ -69,79 +70,77 @@ func registerSmarthomeTools(server *mcp.Server, runtime Runtime) {
 					slog.String("serviceID", service.ID()))
 				continue
 			}
-			registerSmarthomeAPI(server, shs, runtime.Logger())
-			return // one smarthome service is enough for now
+			services = append(services, shs)
 		}
 	}
+	if len(services) == 0 {
+		return
+	}
+	registerSmarthomeAPI(server, services, runtime.Logger())
 }
 
-func registerSmarthomeAPI(server *mcp.Server, shs smarthome.SmarthomeService, logger *slog.Logger) {
+func registerSmarthomeAPI(server *mcp.Server, services []smarthome.SmarthomeService, logger *slog.Logger) {
+	// listLights: aggregate across all services
 	mcp.AddTool(server, &mcp.Tool{
 		Name:        "listLights",
 		Description: "List all lights known to the smart home system. Returns each light's ID, name, on/off state, brightness (0-100), and location.",
 	}, func(ctx context.Context, _ *mcp.CallToolRequest, _ any) (*mcp.CallToolResult, any, error) {
-		lights, err := shs.ListLights(ctx)
-		if err != nil {
-			return nil, nil, err
+		var allLights []*smarthome.Light
+		for _, shs := range services {
+			lights, err := shs.ListLights(ctx)
+			if err != nil {
+				logger.Warn("failed to list lights from service", slog.Any("err", err))
+				continue
+			}
+			allLights = append(allLights, lights...)
 		}
-		text := formatLightsText(lights)
+		text := formatLightsText(allLights)
 		return &mcp.CallToolResult{
-			Content: []mcp.Content{
-				&mcp.TextContent{Text: text},
-			},
-		}, map[string]any{"lights": lights}, nil
+			Content: []mcp.Content{&mcp.TextContent{Text: text}},
+		}, map[string]any{"lights": allLights}, nil
 	})
 
+	// getLight: try each service until found
 	mcp.AddTool(server, &mcp.Tool{
 		Name:        "getLight",
 		Description: "Get details for a single light by its ID.",
 		InputSchema: map[string]any{
 			"type": "object",
 			"properties": map[string]any{
-				"id": map[string]any{
-					"type":        "string",
-					"description": "The light's unique identifier.",
-				},
+				"id": map[string]any{"type": "string", "description": "The light's unique identifier."},
 			},
 			"required": []string{"id"},
 		},
 	}, func(ctx context.Context, _ *mcp.CallToolRequest, input struct {
 		ID string `json:"id"`
 	}) (*mcp.CallToolResult, any, error) {
-		light, err := shs.GetLight(ctx, input.ID)
-		if err != nil {
-			return nil, nil, err
+		for _, shs := range services {
+			light, err := shs.GetLight(ctx, input.ID)
+			if err != nil {
+				continue
+			}
+			text := fmt.Sprintf("Light '%s' (%s): %s, brightness %d%%",
+				light.Name, light.ID, onOffText(light.On), light.Brightness)
+			if light.Location != nil {
+				text += fmt.Sprintf("\nLocation: %s (%s)", light.Location.Name, light.Location.Address)
+			}
+			return &mcp.CallToolResult{
+				Content: []mcp.Content{&mcp.TextContent{Text: text}},
+			}, map[string]any{"light": light}, nil
 		}
-		text := fmt.Sprintf("Light '%s' (%s): %s, brightness %d%%",
-			light.Name, light.ID, onOffText(light.On), light.Brightness)
-		if light.Location != nil {
-			text += fmt.Sprintf("\nLocation: %s (%s)", light.Location.Name, light.Location.Address)
-		}
-		return &mcp.CallToolResult{
-			Content: []mcp.Content{
-				&mcp.TextContent{Text: text},
-			},
-		}, map[string]any{"light": light}, nil
+		return nil, nil, fmt.Errorf("light '%s' not found on any service", input.ID)
 	})
 
+	// setLight: try each service until found
 	mcp.AddTool(server, &mcp.Tool{
 		Name:        "setLight",
 		Description: "Set the on/off state and/or brightness of a single light. Pass only the fields you want to change — nil fields are left unchanged. Brightness is 0-100.",
 		InputSchema: map[string]any{
 			"type": "object",
 			"properties": map[string]any{
-				"id": map[string]any{
-					"type":        "string",
-					"description": "The light's unique identifier.",
-				},
-				"on": map[string]any{
-					"type":        "boolean",
-					"description": "Turn the light on (true) or off (false). Omit to leave unchanged.",
-				},
-				"brightness": map[string]any{
-					"type":        "integer",
-					"description": "Set brightness (0-100). Omit to leave unchanged.",
-				},
+				"id":         map[string]any{"type": "string", "description": "The light's unique identifier."},
+				"on":         map[string]any{"type": "boolean", "description": "Turn the light on (true) or off (false). Omit to leave unchanged."},
+				"brightness": map[string]any{"type": "integer", "description": "Set brightness (0-100). Omit to leave unchanged."},
 			},
 			"required": []string{"id"},
 		},
@@ -150,17 +149,18 @@ func registerSmarthomeAPI(server *mcp.Server, shs smarthome.SmarthomeService, lo
 		On         *bool  `json:"on,omitempty"`
 		Brightness *uint8 `json:"brightness,omitempty"`
 	}) (*mcp.CallToolResult, any, error) {
-		light, err := shs.SetLight(ctx, input.ID, input.On, input.Brightness)
-		if err != nil {
-			return nil, nil, err
+		for _, shs := range services {
+			light, err := shs.SetLight(ctx, input.ID, input.On, input.Brightness)
+			if err != nil {
+				continue
+			}
+			text := fmt.Sprintf("Light '%s': %s, brightness %d%%",
+				light.Name, onOffText(light.On), light.Brightness)
+			return &mcp.CallToolResult{
+				Content: []mcp.Content{&mcp.TextContent{Text: text}},
+			}, map[string]any{"light": light}, nil
 		}
-		text := fmt.Sprintf("Light '%s': %s, brightness %d%%",
-			light.Name, onOffText(light.On), light.Brightness)
-		return &mcp.CallToolResult{
-			Content: []mcp.Content{
-				&mcp.TextContent{Text: text},
-			},
-		}, map[string]any{"light": light}, nil
+		return nil, nil, fmt.Errorf("light '%s' not found on any service", input.ID)
 	})
 }
 
