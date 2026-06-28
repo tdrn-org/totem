@@ -31,6 +31,7 @@ const Name = "jellyfin"
 type Config interface {
 	APIURL() *url.URL
 	APIKey() string
+	UserID() string
 }
 
 func Register(host integration.Host, config Config) (integration.Service, error) {
@@ -42,20 +43,20 @@ func Register(host integration.Host, config Config) (integration.Service, error)
 	apiClient := jellyfinapi.NewAPIClient(apiClientConfig)
 	serviceID := integration.NewServiceID(Name, url.Redacted())
 	s := &jellyfinService{
-		config:            config,
-		serviceID:         serviceID,
-		jellyfinapiClient: apiClient,
-		logger:            slog.With(slog.String("serviceID", serviceID)),
+		config:    config,
+		serviceID: serviceID,
+		apiClient: apiClient,
+		logger:    slog.With(slog.String("serviceID", serviceID)),
 	}
 	host.RegisterService(s)
 	return s, nil
 }
 
 type jellyfinService struct {
-	config            Config
-	serviceID         string
-	jellyfinapiClient *jellyfinapi.APIClient
-	logger            *slog.Logger
+	config    Config
+	serviceID string
+	apiClient *jellyfinapi.APIClient
+	logger    *slog.Logger
 }
 
 func (s *jellyfinService) Name() string {
@@ -67,7 +68,7 @@ func (s *jellyfinService) ID() string {
 }
 
 func (s *jellyfinService) Natures() []integration.Nature {
-	return []integration.Nature{}
+	return []integration.Nature{integration.NatureMedia}
 }
 
 func (s *jellyfinService) Shutdown(ctx context.Context) error {

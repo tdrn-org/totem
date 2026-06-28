@@ -20,4 +20,5 @@ type JellyfinConfig struct {
 	Enabled bool    `toml:"enabled"`
 	APIURL  URLSpec `toml:"api_url"`
 	APIKey  string  `toml:"api_key"`
+	UserID  string  `toml:"user_id"`
 }

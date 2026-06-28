@@ -46,7 +46,6 @@ type SmarthomeService interface {
 	ListLights(ctx context.Context) ([]*Light, error)
 	GetLight(ctx context.Context, id string) (*Light, error)
 	SetLight(ctx context.Context, id string, on *bool, brightness *uint8) (*Light, error)
-
 	ListSensors(ctx context.Context) ([]*Sensor, error)
 	GetSensor(ctx context.Context, id string) (*Sensor, error)
 }

@@ -45,7 +45,11 @@ type Host interface {
 type Nature string
 
 const (
+	// NatureSmarthome is defined by smarthome controllers/hubs providing
+	// to all kinds of smarthome devices.
 	NatureSmarthome Nature = "smarthome"
+	// NatureMedia is defined by media services providing media access.
+	NatureMedia Nature = "media"
 )
 
 type Service interface {
@@ -70,5 +74,5 @@ type Service interface {
 // unique for the service. Ensuring the latter is in the responsibility
 // of the service implementation.
 func NewServiceID(name, instance string) string {
-	return fmt.Sprintf("%s[%s]", name, instance)
+	return fmt.Sprintf("%s [%s]", name, instance)
 }

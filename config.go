@@ -211,3 +211,7 @@ func (c *jellyfinConfig) APIURL() *url.URL {
 func (c *jellyfinConfig) APIKey() string {
 	return c.cfg.APIKey
 }
+
+func (c *jellyfinConfig) UserID() string {
+	return c.cfg.UserID
+}

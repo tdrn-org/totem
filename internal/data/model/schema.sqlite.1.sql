@@ -1,28 +1,21 @@
 --
--- Quote
+-- User
 --
-CREATE TABLE quote(
+CREATE TABLE user(
     id TEXT NOT NULL,
-    timestamp INTEGER NOT NULL,
-    open REAL NOT NULL,
-    high REAL NOT NULL,
-    low REAL NOT NULL,
-    close REAL NOT NULL,
-    volume INTEGER NOT NULL,
-    source TEXT NOT NULL,
-    PRIMARY KEY(id,timestamp)
+    name TEXT NOT NULL,
+    default_location_id TEXT NOT NULL,
+    PRIMARY KEY(id)
 );
-CREATE TABLE quote_symbol(
-    symbol TEXT NOT NULL,
-    quote_id TEXT NOT NULL,
-    PRIMARY KEY(symbol),
-    FOREIGN KEY(quote_id) REFERENCES quote(id)    
-);
-CREATE TABLE quote_symbol_source(
-    symbol TEXT NOT NULL,
-    source TEXT NOT NULL,
-    PRIMARY KEY(symbol,source),
-    FOREIGN KEY(symbol) REFERENCES quote_symbol(symbol)    
+--
+-- User
+--
+CREATE TABLE device(
+    id TEXT NOT NULL,
+    mac TEXT NOT NULL,
+    name TEXT NOT NULL,
+    PRIMARY KEY(id),
+    UNIQUE(mac)
 );
 --
 -- EOF
