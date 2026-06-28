@@ -179,7 +179,7 @@ func (c *huebridgeConfig) Address() string {
 }
 
 func (c *huebridgeConfig) BridgeID() string {
-	return c.cfg.Address
+	return c.cfg.BridgeID
 }
 
 func (c *huebridgeConfig) Login() string {
