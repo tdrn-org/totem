@@ -17,10 +17,10 @@
 package domain
 
 // Location represents a physical location where Totem operates.
-// Each location (e.g. "Giselherstraße 16" or "Zaimi 12") hosts its own
-// set of services (Hue bridge, FRITZ!Box, etc.).
+// Usually a location is assigned to a specific device (Hue bridge,
+// FRITZ!Box, etc.) which operating in exactly this location.
 type Location struct {
-	// ID is the stable, unique identifier for this location (e.g. "Giselher16").
+	// ID is the stable, unique identifier for this location (e.g. "Home").
 	ID string
 	// Name is the human-readable name of this location.
 	Name string

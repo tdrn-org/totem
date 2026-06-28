@@ -76,6 +76,29 @@ func Load(path string, strict bool) (*Config, error) {
 	return config, nil
 }
 
+type DurationSpec time.Duration
+
+func (spec *DurationSpec) Value() string {
+	return time.Duration(*spec).String()
+}
+
+func (spec *DurationSpec) MarshalTOML() ([]byte, error) {
+	return []byte(`"` + spec.Value() + `"`), nil
+}
+
+func (spec *DurationSpec) UnmarshalTOML(value any) error {
+	durationString, ok := value.(string)
+	if !ok {
+		return fmt.Errorf("unexpected duration type %v", value)
+	}
+	parsedDuration, err := time.ParseDuration(durationString)
+	if err != nil {
+		return fmt.Errorf("invalid duration: '%s' (cause: %w)", durationString, err)
+	}
+	*spec = DurationSpec(parsedDuration)
+	return nil
+}
+
 type URLSpec struct {
 	*url.URL
 }

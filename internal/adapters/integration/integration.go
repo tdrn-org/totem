@@ -26,6 +26,8 @@ package integration
 import (
 	"context"
 	"fmt"
+
+	"github.com/tdrn-org/totem/internal/domain"
 )
 
 // Host interface defines the functions needed by the services to interact
@@ -34,7 +36,17 @@ type Host interface {
 	// RegisterService makes the given service visible to the host und confirms
 	// it is ready to be used.
 	RegisterService(service Service)
+	// ResolveLocationID resolved the given location id to the location. This
+	// function never fails, but returns the default location in case th id
+	// cannot be resolved.
+	ResolveLocationID(locationID string) *domain.Location
 }
+
+type Nature string
+
+const (
+	NatureSmarthome Nature = "smarthome"
+)
 
 type Service interface {
 	// Name gets the name of the service (e.g. huebridge). Multiple services
@@ -43,6 +55,8 @@ type Service interface {
 	// ID gets the unique id of the service. This ID is build up from the
 	// service name and an unique instance suffix (see [NewServiceID]).
 	ID() string
+	// Natures gets the service natures supported by this service.
+	Natures() []Nature
 	// Shutdown shuts down the service gracefully processing any pending
 	// requests before comencing operation.
 	Shutdown(ctx context.Context) error

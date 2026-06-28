@@ -20,6 +20,8 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"sync"
+	"time"
 
 	"github.com/tdrn-org/go-hue"
 	"github.com/tdrn-org/totem/internal/adapters/integration"
@@ -32,6 +34,7 @@ type Config interface {
 	Address() string
 	BridgeID() string
 	Login() string
+	Timeout() time.Duration
 }
 
 func Register(host integration.Host, config Config) (integration.Service, error) {
@@ -42,8 +45,9 @@ func Register(host integration.Host, config Config) (integration.Service, error)
 	}
 	bridgeAuthenticator := hue.NewLocalBridgeAuthenticator(config.Login())
 	serviceID := integration.NewServiceID(Name, address)
-	s := &hueService{
+	s := &huebridgeService{
 		config:              config,
+		host:                host,
 		serviceID:           serviceID,
 		bridgeLocator:       bridgeLocator,
 		bridgeAuthenticator: bridgeAuthenticator,
@@ -53,26 +57,63 @@ func Register(host integration.Host, config Config) (integration.Service, error)
 	return s, nil
 }
 
-type hueService struct {
+type huebridgeService struct {
 	config              Config
+	host                integration.Host
 	serviceID           string
 	bridgeLocator       hue.BridgeLocator
 	bridgeAuthenticator hue.BridgeAuthenticator
+	timeout             time.Duration
+	cachedBridgeClient  hue.BridgeClient
 	logger              *slog.Logger
+	mutex               sync.Mutex
 }
 
-func (s *hueService) Name() string {
+func (s *huebridgeService) Name() string {
 	return Name
 }
 
-func (s *hueService) ID() string {
+func (s *huebridgeService) ID() string {
 	return s.serviceID
 }
 
-func (s *hueService) Shutdown(ctx context.Context) error {
+func (s *huebridgeService) Natures() []integration.Nature {
+	return []integration.Nature{integration.NatureSmarthome}
+}
+
+func (s *huebridgeService) Shutdown(ctx context.Context) error {
 	return nil
 }
 
-func (s *hueService) Close() error {
+func (s *huebridgeService) Close() error {
 	return nil
+}
+
+func (s *huebridgeService) resolveBridgeClient() (hue.BridgeClient, error) {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
+	if s.cachedBridgeClient != nil {
+		return s.cachedBridgeClient, nil
+	}
+	bridgeID := s.config.BridgeID()
+	s.logger.Info("resolving client", slog.String("bridgeID", bridgeID))
+	timeout := s.config.Timeout()
+	bridge, err := s.bridgeLocator.Lookup(bridgeID, timeout)
+	if err != nil {
+		return nil, fmt.Errorf("failed to lookup Hue Bridge '%s' (cause: %w)", bridgeID, err)
+	}
+	bridgeClient, err := bridge.NewClient(s.bridgeAuthenticator, timeout)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create Hue Bridge client '%s' (cause: %w)", bridgeID, err)
+	}
+	s.cachedBridgeClient = bridgeClient
+	return s.cachedBridgeClient, nil
+}
+
+func (s *huebridgeService) taintBridgeClient() {
+	s.mutex.Lock()
+	defer s.mutex.Unlock()
+
+	s.cachedBridgeClient = nil
 }

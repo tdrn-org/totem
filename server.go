@@ -59,8 +59,9 @@ func StartServer(ctx context.Context, cfg *config.Config) (*Server, error) {
 	// We will reset the logger after listener has been created.
 	earlyLogger := slog.With(slog.String("server", cfg.Server.Address))
 	s := &Server{
-		cfg:    cfg,
-		logger: earlyLogger,
+		cfg:      cfg,
+		services: make(map[string]integration.Service),
+		logger:   earlyLogger,
 	}
 	startFuncs := []func(context.Context, *config.Config) error{
 		s.startStore,

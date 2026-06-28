@@ -35,7 +35,7 @@ type Config interface {
 func Register(host integration.Host, config Config) (integration.Service, error) {
 	tr064Client := tr064.NewClient(config.DeviceURL())
 	serviceID := integration.NewServiceID(Name, tr064Client.DeviceUrl.Redacted())
-	s := &fritzService{
+	s := &fritzboxService{
 		config:      config,
 		serviceID:   serviceID,
 		tr064Client: tr064Client,
@@ -45,25 +45,29 @@ func Register(host integration.Host, config Config) (integration.Service, error)
 	return s, nil
 }
 
-type fritzService struct {
+type fritzboxService struct {
 	config      Config
 	serviceID   string
 	tr064Client *tr064.Client
 	logger      *slog.Logger
 }
 
-func (s *fritzService) Name() string {
+func (s *fritzboxService) Name() string {
 	return Name
 }
 
-func (s *fritzService) ID() string {
+func (s *fritzboxService) ID() string {
 	return s.serviceID
 }
 
-func (s *fritzService) Shutdown(ctx context.Context) error {
+func (s *fritzboxService) Natures() []integration.Nature {
+	return []integration.Nature{}
+}
+
+func (s *fritzboxService) Shutdown(ctx context.Context) error {
 	return nil
 }
 
-func (s *fritzService) Close() error {
+func (s *fritzboxService) Close() error {
 	return nil
 }

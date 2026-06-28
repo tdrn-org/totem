@@ -20,6 +20,7 @@ import (
 	"log/slog"
 
 	"github.com/tdrn-org/totem/internal/adapters/integration"
+	"github.com/tdrn-org/totem/internal/domain"
 )
 
 func (s *Server) integrationHost() integration.Host {
@@ -42,4 +43,9 @@ type integrationHost struct {
 
 func (h *integrationHost) RegisterService(service integration.Service) {
 	h.s.registerService(service)
+}
+
+func (h *integrationHost) ResolveLocationID(locationID string) *domain.Location {
+	location, _ := h.s.resolveLocationID(locationID)
+	return location
 }

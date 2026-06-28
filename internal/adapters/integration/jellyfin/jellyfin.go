@@ -66,6 +66,10 @@ func (s *jellyfinService) ID() string {
 	return s.serviceID
 }
 
+func (s *jellyfinService) Natures() []integration.Nature {
+	return []integration.Nature{}
+}
+
 func (s *jellyfinService) Shutdown(ctx context.Context) error {
 	return nil
 }

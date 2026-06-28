@@ -20,6 +20,7 @@ import (
 	"log/slog"
 	"net/url"
 	"reflect"
+	"time"
 
 	"github.com/rs/cors"
 	"github.com/tdrn-org/go-conf/service/loglevel"
@@ -30,6 +31,7 @@ import (
 	"github.com/tdrn-org/totem/internal/adapters/integration/fritzbox"
 	"github.com/tdrn-org/totem/internal/adapters/integration/huebridge"
 	"github.com/tdrn-org/totem/internal/adapters/integration/jellyfin"
+	"github.com/tdrn-org/totem/internal/domain"
 )
 
 func applyLoggingConfig(cfg *config.LoggingConfig) {
@@ -101,19 +103,26 @@ func httpServerOptions(cfg *config.ServerConfig) []httpserver.OptionSetter {
 	return httpServerOptions
 }
 
-var defaultLocation *config.LocationConfig = &config.LocationConfig{
-	Name:      "Home",
+var defaultLocation *domain.Location = &domain.Location{
+	Name:      "Default",
 	Latitude:  0.0,
 	Longitude: 0.0,
 }
 
-func (s *Server) resolveLocationID(locationID string) (*config.LocationConfig, bool) {
+func (s *Server) resolveLocationID(locationID string) (*domain.Location, bool) {
 	if locationID == "" {
 		return defaultLocation, false
 	}
-	for _, location := range s.cfg.Locations {
-		if location.ID == locationID && location.Name != "" {
-			return &location, true
+	for _, locationConfig := range s.cfg.Locations {
+		if locationConfig.ID == locationID && locationConfig.Name != "" {
+			location := &domain.Location{
+				ID:        locationConfig.ID,
+				Name:      locationConfig.Name,
+				Address:   locationConfig.Address,
+				Latitude:  locationConfig.Latitude,
+				Longitude: locationConfig.Longitude,
+			}
+			return location, true
 		}
 	}
 	return defaultLocation, false
@@ -175,6 +184,16 @@ func (c *huebridgeConfig) BridgeID() string {
 
 func (c *huebridgeConfig) Login() string {
 	return c.cfg.Login
+}
+
+const defaultHuebridgeTimeout time.Duration = 30 * time.Second
+
+func (c *huebridgeConfig) Timeout() time.Duration {
+	timeout := time.Duration(c.cfg.Timeout)
+	if timeout <= 0 {
+		return defaultHuebridgeTimeout
+	}
+	return timeout
 }
 
 func (s *Server) bindJellyfinService(cfg *config.JellyfinConfig) {
