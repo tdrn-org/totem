@@ -17,17 +17,24 @@
 package mcp
 
 import (
+	"context"
+	"encoding/json"
+	"fmt"
 	"log/slog"
 	"net/http"
 	"net/url"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
+	"github.com/tdrn-org/totem/internal/adapters/integration"
 	"github.com/tdrn-org/totem/internal/buildinfo"
+	"github.com/tdrn-org/totem/internal/domain/smarthome"
 )
 
+// Runtime provides the MCP handler access to the server's services and configuration.
 type Runtime interface {
 	BaseURL() *url.URL
 	Logger() *slog.Logger
+	Services() map[string]integration.Service
 }
 
 func NewHandler(runtime Runtime) http.Handler {
@@ -40,8 +47,121 @@ func NewHandler(runtime Runtime) http.Handler {
 		Logger: runtime.Logger(),
 	}
 	server := mcp.NewServer(impl, options)
+
+	// Register tools from services based on their natures
+	registerSmarthomeTools(server, runtime)
+
 	getServer := func(_ *http.Request) *mcp.Server {
 		return server
 	}
 	return mcp.NewStreamableHTTPHandler(getServer, nil)
+}
+
+func registerSmarthomeTools(server *mcp.Server, runtime Runtime) {
+	for _, service := range runtime.Services() {
+		for _, nature := range service.Natures() {
+			if nature != integration.NatureSmarthome {
+				continue
+			}
+			shs, ok := service.(smarthome.SmarthomeService)
+			if !ok {
+				runtime.Logger().Warn("service declares smarthome nature but does not implement SmarthomeService",
+					slog.String("serviceID", service.ID()))
+				continue
+			}
+			registerSmarthomeAPI(server, shs, runtime.Logger())
+			return // one smarthome service is enough for now
+		}
+	}
+}
+
+func registerSmarthomeAPI(server *mcp.Server, shs smarthome.SmarthomeService, logger *slog.Logger) {
+	mcp.AddTool(server, &mcp.Tool{
+		Name:        "listLights",
+		Description: "List all lights known to the smart home system. Returns each light's ID, name, on/off state, brightness (0-100), and location.",
+	}, func(ctx context.Context, _ *mcp.CallToolRequest, _ any) (*mcp.CallToolResult, any, error) {
+		lights, err := shs.ListLights(ctx)
+		if err != nil {
+			return nil, nil, err
+		}
+		text := formatLightsText(lights)
+		return &mcp.CallToolResult{
+			Content: []mcp.Content{
+				&mcp.TextContent{Text: text},
+			},
+		}, map[string]any{"lights": lights}, nil
+	})
+
+	mcp.AddTool(server, &mcp.Tool{
+		Name:        "getLight",
+		Description: "Get details for a single light by its ID.",
+		InputSchema: map[string]any{
+			"type": "object",
+			"properties": map[string]any{
+				"id": map[string]any{
+					"type":        "string",
+					"description": "The light's unique identifier.",
+				},
+			},
+			"required": []string{"id"},
+		},
+	}, func(ctx context.Context, _ *mcp.CallToolRequest, input struct {
+		ID string `json:"id"`
+	}) (*mcp.CallToolResult, any, error) {
+		light, err := shs.GetLight(ctx, input.ID)
+		if err != nil {
+			return nil, nil, err
+		}
+		text := fmt.Sprintf("Light '%s' (%s): %s, brightness %d%%",
+			light.Name, light.ID, onOffText(light.On), light.Brightness)
+		if light.Location != nil {
+			text += fmt.Sprintf("\nLocation: %s (%s)", light.Location.Name, light.Location.Address)
+		}
+		return &mcp.CallToolResult{
+			Content: []mcp.Content{
+				&mcp.TextContent{Text: text},
+			},
+		}, map[string]any{"light": light}, nil
+	})
+}
+
+func formatLightsText(lights []*smarthome.Light) string {
+	if len(lights) == 0 {
+		return "No lights found."
+	}
+	type summary struct {
+		on  int
+		off int
+	}
+	byLocation := make(map[string]*summary)
+	for _, l := range lights {
+		locName := "Unknown"
+		if l.Location != nil && l.Location.Name != "" {
+			locName = l.Location.Name
+		}
+		s, ok := byLocation[locName]
+		if !ok {
+			s = &summary{}
+			byLocation[locName] = s
+		}
+		if l.On {
+			s.on++
+		} else {
+			s.off++
+		}
+	}
+	result := fmt.Sprintf("%d lights total:\n", len(lights))
+	for loc, s := range byLocation {
+		result += fmt.Sprintf("  %s: %d on, %d off\n", loc, s.on, s.off)
+	}
+	details, _ := json.MarshalIndent(lights, "", "  ")
+	result += "\nDetails:\n" + string(details)
+	return result
+}
+
+func onOffText(on bool) string {
+	if on {
+		return "ON"
+	}
+	return "OFF"
 }

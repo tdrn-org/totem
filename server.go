@@ -283,6 +283,10 @@ func (runtime *serverRuntime) DataStore() *data.Store {
 	return runtime.server.dataStore
 }
 
+func (runtime *serverRuntime) Services() map[string]integration.Service {
+	return runtime.server.services
+}
+
 func (runtime *serverRuntime) Ping(ctx context.Context) error {
 	err := runtime.server.dataStore.Ping(ctx)
 	if err != nil {
