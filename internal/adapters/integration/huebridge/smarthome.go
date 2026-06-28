@@ -30,6 +30,7 @@ func (s *huebridgeService) ListLights(ctx context.Context) ([]*smarthome.Light, 
 	}
 	response, err := bridgeClient.GetLights(ctx)
 	if err != nil {
+		s.taintBridgeClient()
 		return nil, fmt.Errorf("failed to get lights from Hue Bridge (cause: %w)", err)
 	}
 	lights := make([]*smarthome.Light, 0, len(response.JSON200.Data))
@@ -53,6 +54,7 @@ func (s *huebridgeService) GetLight(ctx context.Context, id string) (*smarthome.
 	}
 	response, err := bridgeClient.GetLight(ctx, id)
 	if err != nil {
+		s.taintBridgeClient()
 		return nil, fmt.Errorf("failed to get light from Hue Bridge (cause: %w)", err)
 	}
 	if len(response.JSON200.Data) == 0 {

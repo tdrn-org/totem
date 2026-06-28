@@ -51,6 +51,7 @@ func Register(host integration.Host, config Config) (integration.Service, error)
 		serviceID:           serviceID,
 		bridgeLocator:       bridgeLocator,
 		bridgeAuthenticator: bridgeAuthenticator,
+		timeout:             config.Timeout(),
 		logger:              slog.With(slog.String("serviceID", serviceID)),
 	}
 	host.RegisterService(s)
