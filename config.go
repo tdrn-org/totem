@@ -173,6 +173,10 @@ func (c *huebridgeConfig) BridgeID() string {
 	return c.cfg.Address
 }
 
+func (c *huebridgeConfig) Login() string {
+	return c.cfg.Login
+}
+
 func (s *Server) bindJellyfinService(cfg *config.JellyfinConfig) {
 	jellyfin.Register(s.integrationHost(), &jellyfinConfig{cfg: cfg})
 }

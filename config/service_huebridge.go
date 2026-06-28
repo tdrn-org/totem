@@ -21,4 +21,5 @@ type HuebridgeConfig struct {
 	LocationID string `toml:"location_id"`
 	Address    string `toml:"address"`
 	BridgeID   string `toml:"bridge_id"`
+	Login      string `toml:"login"`
 }

@@ -53,6 +53,7 @@ enabled = false
 location_id = "home2"
 address = "192.168.10.2"
 bridge_id = "0123456789ABCDEF"
+login = "abcdefgh"
 
 [[service.jellyfin]]
 enabled = false

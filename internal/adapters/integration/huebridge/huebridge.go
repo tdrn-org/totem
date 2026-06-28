@@ -31,6 +31,7 @@ type Config interface {
 	LocationID() string
 	Address() string
 	BridgeID() string
+	Login() string
 }
 
 func Register(host integration.Host, config Config) (integration.Service, error) {
@@ -39,22 +40,25 @@ func Register(host integration.Host, config Config) (integration.Service, error)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create bridge locator for address '%s' (cause: %w)", config.Address(), err)
 	}
+	bridgeAuthenticator := hue.NewLocalBridgeAuthenticator(config.Login())
 	serviceID := integration.NewServiceID(Name, address)
 	s := &hueService{
-		config:        config,
-		serviceID:     serviceID,
-		bridgeLocator: bridgeLocator,
-		logger:        slog.With(slog.String("serviceID", serviceID)),
+		config:              config,
+		serviceID:           serviceID,
+		bridgeLocator:       bridgeLocator,
+		bridgeAuthenticator: bridgeAuthenticator,
+		logger:              slog.With(slog.String("serviceID", serviceID)),
 	}
 	host.RegisterService(s)
 	return s, nil
 }
 
 type hueService struct {
-	config        Config
-	serviceID     string
-	bridgeLocator hue.BridgeLocator
-	logger        *slog.Logger
+	config              Config
+	serviceID           string
+	bridgeLocator       hue.BridgeLocator
+	bridgeAuthenticator hue.BridgeAuthenticator
+	logger              *slog.Logger
 }
 
 func (s *hueService) Name() string {
