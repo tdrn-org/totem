@@ -36,4 +36,5 @@ build/
 
 # Local configs
 *-local.toml
+totem.toml
 pim-mcp
