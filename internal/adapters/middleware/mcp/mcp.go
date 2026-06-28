@@ -123,6 +123,45 @@ func registerSmarthomeAPI(server *mcp.Server, shs smarthome.SmarthomeService, lo
 			},
 		}, map[string]any{"light": light}, nil
 	})
+
+	mcp.AddTool(server, &mcp.Tool{
+		Name:        "setLight",
+		Description: "Set the on/off state and/or brightness of a single light. Pass only the fields you want to change — nil fields are left unchanged. Brightness is 0-100.",
+		InputSchema: map[string]any{
+			"type": "object",
+			"properties": map[string]any{
+				"id": map[string]any{
+					"type":        "string",
+					"description": "The light's unique identifier.",
+				},
+				"on": map[string]any{
+					"type":        "boolean",
+					"description": "Turn the light on (true) or off (false). Omit to leave unchanged.",
+				},
+				"brightness": map[string]any{
+					"type":        "integer",
+					"description": "Set brightness (0-100). Omit to leave unchanged.",
+				},
+			},
+			"required": []string{"id"},
+		},
+	}, func(ctx context.Context, _ *mcp.CallToolRequest, input struct {
+		ID         string `json:"id"`
+		On         *bool  `json:"on,omitempty"`
+		Brightness *uint8 `json:"brightness,omitempty"`
+	}) (*mcp.CallToolResult, any, error) {
+		light, err := shs.SetLight(ctx, input.ID, input.On, input.Brightness)
+		if err != nil {
+			return nil, nil, err
+		}
+		text := fmt.Sprintf("Light '%s': %s, brightness %d%%",
+			light.Name, onOffText(light.On), light.Brightness)
+		return &mcp.CallToolResult{
+			Content: []mcp.Content{
+				&mcp.TextContent{Text: text},
+			},
+		}, map[string]any{"light": light}, nil
+	})
 }
 
 func formatLightsText(lights []*smarthome.Light) string {

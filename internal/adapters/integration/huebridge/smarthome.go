@@ -20,6 +20,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/tdrn-org/go-hue/api"
 	"github.com/tdrn-org/totem/internal/domain/smarthome"
 )
 
@@ -72,5 +73,28 @@ func (s *huebridgeService) GetLight(ctx context.Context, id string) (*smarthome.
 }
 
 func (s *huebridgeService) SetLight(ctx context.Context, id string, on *bool, brightness *uint8) (*smarthome.Light, error) {
-	return nil, nil
+	bridgeClient, err := s.resolveBridgeClient()
+	if err != nil {
+		return nil, err
+	}
+	body := api.LightPut{}
+	if on != nil {
+		body.On = &api.On{On: *on}
+	}
+	if brightness != nil {
+		bri := api.Brightness(*brightness) / 100.0
+		if bri <= 0.0 {
+			bri = 0.01 // Hue minimum brightness
+		}
+		if bri > 1.0 {
+			bri = 1.0
+		}
+		body.Dimming = &api.Dimming{Brightness: bri}
+	}
+	_, err = bridgeClient.UpdateLight(ctx, id, body)
+	if err != nil {
+		s.taintBridgeClient()
+		return nil, fmt.Errorf("failed to update light on Hue Bridge (cause: %w)", err)
+	}
+	return s.GetLight(ctx, id)
 }
