@@ -29,11 +29,30 @@ type = "sqlite"
 [store.sqlite]
 file = "./totem.db"
 
-[[service.fritz]]
-enabled = false
+[[location]]
+id = "home1"
+name = "Home 1"
+address = "Address 1"
+latitude = 1.1
+longitude = 1.2
 
-[[service.hue]]
+[[location]]
+id = "home2"
+name = "Home 2"
+address = "Address 2"
+latitude = 2.1
+longitude = 2.2
+
+[[service.fritzbox]]
 enabled = false
+location_id = "home1"
+device_url = "http://user:password@fritz.box:49000/"
+
+[[service.huebridge]]
+enabled = false
+location_id = "home2"
+address = "192.168.10.2"
+bridge_id = "0123456789ABCDEF"
 
 [[service.jellyfin]]
 enabled = false

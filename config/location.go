@@ -16,6 +16,10 @@
 
 package config
 
-type HueConfig struct {
-	Enabled bool `toml:"Enabled"`
+type LocationConfig struct {
+	ID        string  `toml:"id"`
+	Name      string  `toml:"name"`
+	Address   string  `toml:"address"`
+	Latitude  float64 `toml:"latitude"`
+	Longitude float64 `toml:"longitude"`
 }

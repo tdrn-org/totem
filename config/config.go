@@ -28,13 +28,14 @@ import (
 )
 
 type Config struct {
-	Logging  LoggingConfig `toml:"logging"`
-	Server   ServerConfig  `toml:"server"`
-	Store    StoreConfig   `toml:"store"`
-	Services struct {
-		FritzServices   []FritzConfig    `toml:"fritz"`
-		HueService      []HueConfig      `toml:"hue"`
-		JellyfinService []JellyfinConfig `toml:"jellyfin"`
+	Logging   LoggingConfig    `toml:"logging"`
+	Server    ServerConfig     `toml:"server"`
+	Store     StoreConfig      `toml:"store"`
+	Locations []LocationConfig `toml:"location"`
+	Services  struct {
+		FritzboxServices  []FritzboxConfig  `toml:"fritzbox"`
+		HuebridgeServices []HuebridgeConfig `toml:"huebridge"`
+		JellyfinServices  []JellyfinConfig  `toml:"jellyfin"`
 	} `toml:"service"`
 }
 

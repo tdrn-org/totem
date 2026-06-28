@@ -28,7 +28,9 @@ import (
 const Name = "huebridge"
 
 type Config interface {
+	LocationID() string
 	Address() string
+	BridgeID() string
 }
 
 func Register(host integration.Host, config Config) (integration.Service, error) {
@@ -44,7 +46,7 @@ func Register(host integration.Host, config Config) (integration.Service, error)
 		bridgeLocator: bridgeLocator,
 		logger:        slog.With(slog.String("serviceID", serviceID)),
 	}
-	host.Register(s)
+	host.RegisterService(s)
 	return s, nil
 }
 

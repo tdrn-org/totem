@@ -17,5 +17,7 @@
 package config
 
 type JellyfinConfig struct {
-	Enabled bool `toml:"Enabled"`
+	Enabled bool    `toml:"enabled"`
+	APIURL  URLSpec `toml:"api_url"`
+	APIKey  string  `toml:"api_key"`
 }

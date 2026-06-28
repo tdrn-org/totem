@@ -29,15 +29,15 @@ import (
 const Name = "jellyfin"
 
 type Config interface {
-	JellyfinURL() *url.URL
-	APIToken() string
+	APIURL() *url.URL
+	APIKey() string
 }
 
 func Register(host integration.Host, config Config) (integration.Service, error) {
-	url := config.JellyfinURL()
+	url := config.APIURL()
 	apiClientConfig := &jellyfinapi.Configuration{
 		Servers:       jellyfinapi.ServerConfigurations{{URL: url.String()}},
-		DefaultHeader: map[string]string{"Authorization": fmt.Sprintf("MediaBrowser Token=\"%s\"", config.APIToken())},
+		DefaultHeader: map[string]string{"Authorization": fmt.Sprintf("MediaBrowser Token=\"%s\"", config.APIKey())},
 	}
 	apiClient := jellyfinapi.NewAPIClient(apiClientConfig)
 	serviceID := integration.NewServiceID(Name, url.Redacted())
@@ -47,7 +47,7 @@ func Register(host integration.Host, config Config) (integration.Service, error)
 		jellyfinapiClient: apiClient,
 		logger:            slog.With(slog.String("serviceID", serviceID)),
 	}
-	host.Register(s)
+	host.RegisterService(s)
 	return s, nil
 }
 

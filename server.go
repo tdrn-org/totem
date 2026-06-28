@@ -32,6 +32,7 @@ import (
 	"github.com/tdrn-org/go-httpserver"
 	"github.com/tdrn-org/go-tlsconf/tlsclient"
 	"github.com/tdrn-org/totem/config"
+	"github.com/tdrn-org/totem/internal/adapters/integration"
 	"github.com/tdrn-org/totem/internal/adapters/middleware/mcp"
 	"github.com/tdrn-org/totem/internal/adapters/middleware/rest"
 	"github.com/tdrn-org/totem/internal/data"
@@ -45,6 +46,7 @@ type Server struct {
 	dataStore           *data.Store
 	httpServer          *httpserver.Instance
 	baseURL             *url.URL
+	services            map[string]integration.Service
 	jobTicker           *time.Ticker
 	jobTickerShutdown   chan any
 	jobTickerShutdownWG sync.WaitGroup
@@ -63,6 +65,7 @@ func StartServer(ctx context.Context, cfg *config.Config) (*Server, error) {
 	startFuncs := []func(context.Context, *config.Config) error{
 		s.startStore,
 		s.startHttpServer,
+		s.startIntegrations,
 		s.startRestAPI,
 		s.startMCPHandler,
 		s.startJobTicker,
@@ -89,6 +92,7 @@ func (s *Server) Run(ctx context.Context) error {
 func (s *Server) Shutdown(ctx context.Context) error {
 	shutdownFuncs := []func(context.Context) error{
 		s.shutdownJobTicker,
+		s.shutdownIntegrations,
 		s.shutdownHttpServer,
 	}
 	shutdownErrs := make([]error, 0, len(shutdownFuncs))
@@ -100,6 +104,7 @@ func (s *Server) Shutdown(ctx context.Context) error {
 
 func (s *Server) Close() error {
 	closeFuncs := []func() error{
+		s.closeIntegrations,
 		s.closeHttpServer,
 		s.closeStore,
 	}
@@ -193,6 +198,33 @@ func (s *Server) closeHttpServer() error {
 	}
 	s.logger.Info("closing HTTP server...")
 	return s.httpServer.Close()
+}
+
+func (s *Server) startIntegrations(_ context.Context, cfg *config.Config) error {
+	s.bindIntegrationServices(cfg)
+	return nil
+}
+
+func (s *Server) shutdownIntegrations(ctx context.Context) error {
+	shutdownErrs := make([]error, 0, len(s.services))
+	for _, service := range s.services {
+		shutdownErr := service.Shutdown(ctx)
+		if shutdownErr != nil {
+			shutdownErrs = append(shutdownErrs, shutdownErr)
+		}
+	}
+	return errors.Join(shutdownErrs...)
+}
+
+func (s *Server) closeIntegrations() error {
+	closeErrs := make([]error, 0, len(s.services))
+	for _, service := range s.services {
+		closeErr := service.Close()
+		if closeErr != nil {
+			closeErrs = append(closeErrs, closeErr)
+		}
+	}
+	return errors.Join(closeErrs...)
 }
 
 func (s *Server) startRestAPI(_ context.Context, _ *config.Config) error {

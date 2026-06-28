@@ -31,9 +31,9 @@ import (
 // Host interface defines the functions needed by the services to interact
 // with the host running them.
 type Host interface {
-	// Register makes the given service visible to the host und confirms
+	// RegisterService makes the given service visible to the host und confirms
 	// it is ready to be used.
-	Register(service Service)
+	RegisterService(service Service)
 }
 
 type Service interface {

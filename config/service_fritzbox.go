@@ -16,6 +16,8 @@
 
 package config
 
-type FritzConfig struct {
-	Enabled bool `toml:"Enabled"`
+type FritzboxConfig struct {
+	Enabled    bool    `toml:"enabled"`
+	LocationID string  `toml:"location_id"`
+	DeviceURL  URLSpec `toml:"device_url"`
 }

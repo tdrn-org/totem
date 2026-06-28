@@ -28,6 +28,7 @@ import (
 const Name = "fritzbox"
 
 type Config interface {
+	LocationID() string
 	DeviceURL() *url.URL
 }
 
@@ -40,7 +41,7 @@ func Register(host integration.Host, config Config) (integration.Service, error)
 		tr064Client: tr064Client,
 		logger:      slog.With(slog.String("serviceID", serviceID)),
 	}
-	host.Register(s)
+	host.RegisterService(s)
 	return s, nil
 }
 

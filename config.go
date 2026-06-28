@@ -18,6 +18,7 @@ package totem
 
 import (
 	"log/slog"
+	"net/url"
 	"reflect"
 
 	"github.com/rs/cors"
@@ -26,6 +27,9 @@ import (
 	"github.com/tdrn-org/go-httpserver/certificate"
 	"github.com/tdrn-org/go-log"
 	"github.com/tdrn-org/totem/config"
+	"github.com/tdrn-org/totem/internal/adapters/integration/fritzbox"
+	"github.com/tdrn-org/totem/internal/adapters/integration/huebridge"
+	"github.com/tdrn-org/totem/internal/adapters/integration/jellyfin"
 )
 
 func applyLoggingConfig(cfg *config.LoggingConfig) {
@@ -95,4 +99,92 @@ func httpServerOptions(cfg *config.ServerConfig) []httpserver.OptionSetter {
 		httpServerOptions = append(httpServerOptions, httpserver.WithAccessLog(accessLogLogger))
 	}
 	return httpServerOptions
+}
+
+var defaultLocation *config.LocationConfig = &config.LocationConfig{
+	Name:      "Home",
+	Latitude:  0.0,
+	Longitude: 0.0,
+}
+
+func (s *Server) resolveLocationID(locationID string) (*config.LocationConfig, bool) {
+	if locationID == "" {
+		return defaultLocation, false
+	}
+	for _, location := range s.cfg.Locations {
+		if location.ID == locationID && location.Name != "" {
+			return &location, true
+		}
+	}
+	return defaultLocation, false
+}
+
+func (s *Server) bindIntegrationServices(cfg *config.Config) {
+	for _, fritzboxConfig := range cfg.Services.FritzboxServices {
+		if fritzboxConfig.Enabled {
+			s.bindFritzboxService(&fritzboxConfig)
+		}
+	}
+	for _, huebridgeConfig := range cfg.Services.HuebridgeServices {
+		if huebridgeConfig.Enabled {
+			s.bindHuebridgeService(&huebridgeConfig)
+		}
+	}
+	for _, jellyfinConfig := range cfg.Services.JellyfinServices {
+		if jellyfinConfig.Enabled {
+			s.bindJellyfinService(&jellyfinConfig)
+		}
+	}
+}
+
+func (s *Server) bindFritzboxService(cfg *config.FritzboxConfig) {
+	fritzbox.Register(s.integrationHost(), &fritzboxConfig{cfg: cfg})
+}
+
+type fritzboxConfig struct {
+	cfg *config.FritzboxConfig
+}
+
+func (c *fritzboxConfig) LocationID() string {
+	return c.cfg.LocationID
+}
+
+func (c *fritzboxConfig) DeviceURL() *url.URL {
+	return c.cfg.DeviceURL.URL
+}
+
+func (s *Server) bindHuebridgeService(cfg *config.HuebridgeConfig) {
+	huebridge.Register(s.integrationHost(), &huebridgeConfig{cfg: cfg})
+}
+
+type huebridgeConfig struct {
+	cfg *config.HuebridgeConfig
+}
+
+func (c *huebridgeConfig) LocationID() string {
+	return c.cfg.LocationID
+}
+
+func (c *huebridgeConfig) Address() string {
+	return c.cfg.Address
+}
+
+func (c *huebridgeConfig) BridgeID() string {
+	return c.cfg.Address
+}
+
+func (s *Server) bindJellyfinService(cfg *config.JellyfinConfig) {
+	jellyfin.Register(s.integrationHost(), &jellyfinConfig{cfg: cfg})
+}
+
+type jellyfinConfig struct {
+	cfg *config.JellyfinConfig
+}
+
+func (c *jellyfinConfig) APIURL() *url.URL {
+	return c.cfg.APIURL.URL
+}
+
+func (c *jellyfinConfig) APIKey() string {
+	return c.cfg.APIKey
 }
