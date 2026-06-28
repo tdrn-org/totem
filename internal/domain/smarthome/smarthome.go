@@ -42,11 +42,26 @@ type Light struct {
 	Location *domain.Location
 }
 
+// Sensor represents a smart-home sensor (temperature, motion, etc.).
+type Sensor struct {
+	// ID is the bridge-assigned unique identifier for this sensor.
+	ID string
+	// Name is the human-readable name of this sensor.
+	Name string
+	// Type is the sensor type (e.g. "temperature").
+	Type string
+	// Temperature is the current temperature in degrees Celsius.
+	// Only valid when Type is "temperature".
+	Temperature float64
+	// Location references the physical location this sensor belongs to.
+	Location *domain.Location
+}
+
 // SmarthomeService defines the operations that any smart-home provider
-// (Hue bridge, TR-064, etc.) must support for lighting control.
+// (Hue bridge, TR-064, etc.) must support for lighting and sensors.
 //
 // Each registered integration service that implements this interface
-// will have its lighting capabilities exposed as MCP tools.
+// will have its capabilities exposed as MCP tools.
 type SmarthomeService interface {
 	// ListLights returns all lights known to this service.
 	ListLights(ctx context.Context) ([]*Light, error)
@@ -59,4 +74,10 @@ type SmarthomeService interface {
 	// Fields set to nil are left unchanged; non-nil fields are applied.
 	// Returns the updated light state.
 	SetLight(ctx context.Context, id string, on *bool, brightness *uint8) (*Light, error)
+
+	// ListSensors returns all sensors known to this service.
+	ListSensors(ctx context.Context) ([]*Sensor, error)
+
+	// GetSensor returns a single sensor by its bridge-assigned ID.
+	GetSensor(ctx context.Context, id string) (*Sensor, error)
 }

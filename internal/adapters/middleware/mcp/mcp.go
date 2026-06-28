@@ -162,6 +162,57 @@ func registerSmarthomeAPI(server *mcp.Server, services []smarthome.SmarthomeServ
 		}
 		return nil, nil, fmt.Errorf("light '%s' not found on any service", input.ID)
 	})
+
+	// listSensors: aggregate across all services
+	mcp.AddTool(server, &mcp.Tool{
+		Name:        "listSensors",
+		Description: "List all sensors known to the smart home system. Returns each sensor's ID, name, type, temperature (if applicable), and location.",
+	}, func(ctx context.Context, _ *mcp.CallToolRequest, _ any) (*mcp.CallToolResult, any, error) {
+		var allSensors []*smarthome.Sensor
+		for _, shs := range services {
+			sensors, err := shs.ListSensors(ctx)
+			if err != nil {
+				logger.Warn("failed to list sensors from service", slog.Any("err", err))
+				continue
+			}
+			allSensors = append(allSensors, sensors...)
+		}
+		text := formatSensorsText(allSensors)
+		return &mcp.CallToolResult{
+			Content: []mcp.Content{&mcp.TextContent{Text: text}},
+		}, map[string]any{"sensors": allSensors}, nil
+	})
+
+	// getSensor: try each service until found
+	mcp.AddTool(server, &mcp.Tool{
+		Name:        "getSensor",
+		Description: "Get details for a single sensor by its ID.",
+		InputSchema: map[string]any{
+			"type": "object",
+			"properties": map[string]any{
+				"id": map[string]any{"type": "string", "description": "The sensor's unique identifier."},
+			},
+			"required": []string{"id"},
+		},
+	}, func(ctx context.Context, _ *mcp.CallToolRequest, input struct {
+		ID string `json:"id"`
+	}) (*mcp.CallToolResult, any, error) {
+		for _, shs := range services {
+			sensor, err := shs.GetSensor(ctx, input.ID)
+			if err != nil {
+				continue
+			}
+			text := fmt.Sprintf("Sensor '%s' (%s): type=%s, %.1f°C",
+				sensor.Name, sensor.ID, sensor.Type, sensor.Temperature)
+			if sensor.Location != nil {
+				text += fmt.Sprintf("\nLocation: %s (%s)", sensor.Location.Name, sensor.Location.Address)
+			}
+			return &mcp.CallToolResult{
+				Content: []mcp.Content{&mcp.TextContent{Text: text}},
+			}, map[string]any{"sensor": sensor}, nil
+		}
+		return nil, nil, fmt.Errorf("sensor '%s' not found on any service", input.ID)
+	})
 }
 
 func formatLightsText(lights []*smarthome.Light) string {
@@ -203,4 +254,35 @@ func onOffText(on bool) string {
 		return "ON"
 	}
 	return "OFF"
+}
+
+func formatSensorsText(sensors []*smarthome.Sensor) string {
+	if len(sensors) == 0 {
+		return "No sensors found."
+	}
+	type locSummary struct {
+		count int
+	}
+	byLocation := make(map[string]*locSummary)
+	for _, s := range sensors {
+		locName := "Unknown"
+		if s.Location != nil && s.Location.Name != "" {
+			locName = s.Location.Name
+		}
+		l, ok := byLocation[locName]
+		if !ok {
+			l = &locSummary{}
+			byLocation[locName] = l
+		}
+		l.count++
+	}
+	result := fmt.Sprintf("%d sensors total:\n", len(sensors))
+	for loc, l := range byLocation {
+		result += fmt.Sprintf("  %s: %d sensors\n", loc, l.count)
+	}
+	result += "\n"
+	for _, s := range sensors {
+		result += fmt.Sprintf("  %-30s %-12s %.1f°C\n", s.Name, s.Type, s.Temperature)
+	}
+	return result
 }
