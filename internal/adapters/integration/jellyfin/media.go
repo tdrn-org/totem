@@ -15,3 +15,62 @@
  */
 
 package jellyfin
+
+import (
+	"context"
+	"fmt"
+	"net/http"
+	"time"
+
+	jellyfinapi "github.com/sj14/jellyfin-go/api"
+	"github.com/tdrn-org/totem/internal/domain/media"
+)
+
+var includePlaylists []jellyfinapi.BaseItemKind = []jellyfinapi.BaseItemKind{jellyfinapi.BASEITEMKIND_PLAYLIST}
+
+func (s jellyfinService) ListPlaylists(ctx context.Context) ([]*media.Playlist, error) {
+	apiResponse, httpResponse, err := s.apiClient.ItemsAPI.
+		GetItems(ctx).
+		UserId(s.config.
+			UserID()).
+		IncludeItemTypes(includePlaylists).
+		Recursive(true).
+		Execute()
+	if err != nil {
+		return nil, fmt.Errorf("failed request playlists from Jellyfin (cause: %w)", err)
+	}
+	if httpResponse.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("failed to get playlists from Jellyfin (status: %s)", httpResponse.Status)
+	}
+	playlists := make([]*media.Playlist, 0, len(apiResponse.Items))
+	for _, item := range apiResponse.Items {
+		playlist := &media.Playlist{
+			ID:        *item.Id,
+			Name:      *item.Name.Get(),
+			Duration:  time.Duration(item.GetRunTimeTicks()),
+			ItemCount: int(item.GetChildCount()),
+		}
+		playlists = append(playlists, playlist)
+	}
+	return playlists, nil
+}
+
+func (s jellyfinService) GetPlaylist(ctx context.Context, id string) (*media.Playlist, error) {
+	return nil, nil
+}
+
+func (s jellyfinService) AddToPlaylist(ctx context.Context, playlistID string, itemIDs []string) (*media.Playlist, error) {
+	return nil, nil
+}
+
+func (s jellyfinService) RemoveFromPlaylist(ctx context.Context, playlistID string, itemIDs []string) (*media.Playlist, error) {
+	return nil, nil
+}
+
+func (s jellyfinService) SearchItems(ctx context.Context, query string, mediaTypes []string, limit int) ([]*media.MediaItem, error) {
+	return nil, nil
+}
+
+func (s jellyfinService) GetRecentlyPlayed(ctx context.Context, limit int) ([]*media.MediaItem, error) {
+	return nil, nil
+}
