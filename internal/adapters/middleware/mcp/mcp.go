@@ -294,6 +294,78 @@ func registerMediaAPI(server *mcp.Server, services []media.MediaService, logger 
 		return nil, nil, fmt.Errorf("playlist '%s' not found on any service", input.ID)
 	})
 
+	// addToPlaylist: try each service until found
+	mcp.AddTool(server, &mcp.Tool{
+		Name:        "addToPlaylist",
+		Description: "Add one or more media items to a playlist. Use item IDs from searchMedia results. Returns the updated playlist.",
+		InputSchema: map[string]any{
+			"type": "object",
+			"properties": map[string]any{
+				"playlistID": map[string]any{"type": "string", "description": "The playlist's unique identifier."},
+				"itemIDs":    map[string]any{"type": "array", "items": map[string]any{"type": "string"}, "description": "One or more media item IDs to add."},
+			},
+			"required": []string{"playlistID", "itemIDs"},
+		},
+	}, func(ctx context.Context, _ *mcp.CallToolRequest, input struct {
+		PlaylistID string   `json:"playlistID"`
+		ItemIDs    []string `json:"itemIDs"`
+	}) (*mcp.CallToolResult, any, error) {
+		for _, ms := range services {
+			playlist, err := ms.AddToPlaylist(ctx, input.PlaylistID, input.ItemIDs)
+			if err != nil {
+				continue
+			}
+			text := fmt.Sprintf("Added %d item(s) to playlist '%s'.\nNew total: %d items, %s",
+				len(input.ItemIDs), playlist.Name, playlist.ItemCount, playlist.Duration)
+			if len(playlist.Items) > 0 {
+				text += "\n\nTracks:"
+				for i, item := range playlist.Items {
+					text += fmt.Sprintf("\n  %d. %s — %s (%s)", i+1, item.Name, item.Artists, item.Duration)
+				}
+			}
+			return &mcp.CallToolResult{
+				Content: []mcp.Content{&mcp.TextContent{Text: text}},
+			}, map[string]any{"playlist": playlist}, nil
+		}
+		return nil, nil, fmt.Errorf("playlist '%s' not found on any service", input.PlaylistID)
+	})
+
+	// removeFromPlaylist: try each service until found
+	mcp.AddTool(server, &mcp.Tool{
+		Name:        "removeFromPlaylist",
+		Description: "Remove one or more media items from a playlist. Use item IDs from getPlaylist results. Returns the updated playlist.",
+		InputSchema: map[string]any{
+			"type": "object",
+			"properties": map[string]any{
+				"playlistID": map[string]any{"type": "string", "description": "The playlist's unique identifier."},
+				"itemIDs":    map[string]any{"type": "array", "items": map[string]any{"type": "string"}, "description": "One or more media item IDs to remove."},
+			},
+			"required": []string{"playlistID", "itemIDs"},
+		},
+	}, func(ctx context.Context, _ *mcp.CallToolRequest, input struct {
+		PlaylistID string   `json:"playlistID"`
+		ItemIDs    []string `json:"itemIDs"`
+	}) (*mcp.CallToolResult, any, error) {
+		for _, ms := range services {
+			playlist, err := ms.RemoveFromPlaylist(ctx, input.PlaylistID, input.ItemIDs)
+			if err != nil {
+				continue
+			}
+			text := fmt.Sprintf("Removed %d item(s) from playlist '%s'.\nNew total: %d items, %s",
+				len(input.ItemIDs), playlist.Name, playlist.ItemCount, playlist.Duration)
+			if len(playlist.Items) > 0 {
+				text += "\n\nTracks:"
+				for i, item := range playlist.Items {
+					text += fmt.Sprintf("\n  %d. %s — %s (%s)", i+1, item.Name, item.Artists, item.Duration)
+				}
+			}
+			return &mcp.CallToolResult{
+				Content: []mcp.Content{&mcp.TextContent{Text: text}},
+			}, map[string]any{"playlist": playlist}, nil
+		}
+		return nil, nil, fmt.Errorf("playlist '%s' not found on any service", input.PlaylistID)
+	})
+
 	// searchMedia: try each service until results found
 	mcp.AddTool(server, &mcp.Tool{
 		Name:        "searchMedia",
