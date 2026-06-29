@@ -25,8 +25,9 @@ import (
 // A media server provides access to music, playlists, and playback history.
 // It is location-less — media follows the user wherever they are.
 type MediaService interface {
-	// ListPlaylists returns all playlists available on the media server.
-	ListPlaylists(ctx context.Context) ([]*Playlist, error)
+	// ListPlaylists returns a summary of all playlists available on the media server.
+	// Summaries omit items to avoid N+1 API calls — use GetPlaylist for details.
+	ListPlaylists(ctx context.Context) ([]*PlaylistSummary, error)
 
 	// GetPlaylist returns a single playlist including all its items.
 	GetPlaylist(ctx context.Context, id string) (*Playlist, error)
@@ -48,7 +49,17 @@ type MediaService interface {
 	GetRecentlyPlayed(ctx context.Context, limit int) ([]*MediaItem, error)
 }
 
-// Playlist represents a named, ordered collection of media items.
+// PlaylistSummary is a lightweight view of a playlist without items.
+// Used by ListPlaylists to avoid N+1 API calls per playlist.
+type PlaylistSummary struct {
+	ID        string
+	Name      string
+	Duration  time.Duration
+	ItemCount int
+}
+
+// Playlist represents a named, ordered collection of media items including the full item list.
+// Use GetPlaylist to retrieve this detailed view.
 type Playlist struct {
 	ID        string
 	Name      string

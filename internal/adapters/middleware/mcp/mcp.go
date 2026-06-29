@@ -27,6 +27,7 @@ import (
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"github.com/tdrn-org/totem/internal/adapters/integration"
 	"github.com/tdrn-org/totem/internal/buildinfo"
+	"github.com/tdrn-org/totem/internal/domain/media"
 	"github.com/tdrn-org/totem/internal/domain/smarthome"
 )
 
@@ -50,6 +51,7 @@ func NewHandler(runtime Runtime) http.Handler {
 
 	// Register tools from services based on their natures
 	registerSmarthomeTools(server, runtime)
+	registerMediaTools(server, runtime)
 
 	getServer := func(_ *http.Request) *mcp.Server {
 		return server
@@ -213,6 +215,172 @@ func registerSmarthomeAPI(server *mcp.Server, services []smarthome.SmarthomeServ
 		}
 		return nil, nil, fmt.Errorf("sensor '%s' not found on any service", input.ID)
 	})
+}
+
+func registerMediaTools(server *mcp.Server, runtime Runtime) {
+	var services []media.MediaService
+	for _, service := range runtime.Services() {
+		for _, nature := range service.Natures() {
+			if nature != integration.NatureMedia {
+				continue
+			}
+			ms, ok := service.(media.MediaService)
+			if !ok {
+				runtime.Logger().Warn("service declares media nature but does not implement MediaService",
+					slog.String("serviceID", service.ID()))
+				continue
+			}
+			services = append(services, ms)
+		}
+	}
+	if len(services) == 0 {
+		return
+	}
+	registerMediaAPI(server, services, runtime.Logger())
+}
+
+func registerMediaAPI(server *mcp.Server, services []media.MediaService, logger *slog.Logger) {
+	// listPlaylists: aggregate summaries across all media services
+	mcp.AddTool(server, &mcp.Tool{
+		Name:        "listPlaylists",
+		Description: "List all playlists from media servers. Returns each playlist's ID, name, total duration (as a Go duration string), and item count. Media is location-less.",
+	}, func(ctx context.Context, _ *mcp.CallToolRequest, _ any) (*mcp.CallToolResult, any, error) {
+		var allPlaylists []*media.PlaylistSummary
+		for _, ms := range services {
+			playlists, err := ms.ListPlaylists(ctx)
+			if err != nil {
+				logger.Warn("failed to list playlists from service", slog.Any("err", err))
+				continue
+			}
+			allPlaylists = append(allPlaylists, playlists...)
+		}
+		text := formatPlaylistsText(allPlaylists)
+		return &mcp.CallToolResult{
+			Content: []mcp.Content{&mcp.TextContent{Text: text}},
+		}, map[string]any{"playlists": allPlaylists}, nil
+	})
+
+	// getPlaylist: try each service until found
+	mcp.AddTool(server, &mcp.Tool{
+		Name:        "getPlaylist",
+		Description: "Get details for a single playlist including all its items. Use the playlist ID from listPlaylists.",
+		InputSchema: map[string]any{
+			"type": "object",
+			"properties": map[string]any{
+				"id": map[string]any{"type": "string", "description": "The playlist's unique identifier."},
+			},
+			"required": []string{"id"},
+		},
+	}, func(ctx context.Context, _ *mcp.CallToolRequest, input struct {
+		ID string `json:"id"`
+	}) (*mcp.CallToolResult, any, error) {
+		for _, ms := range services {
+			playlist, err := ms.GetPlaylist(ctx, input.ID)
+			if err != nil {
+				continue
+			}
+			text := fmt.Sprintf("Playlist '%s': %d items, %s total",
+				playlist.Name, playlist.ItemCount, playlist.Duration)
+			if len(playlist.Items) > 0 {
+				text += "\n\nTracks:"
+				for i, item := range playlist.Items {
+					text += fmt.Sprintf("\n  %d. %s — %s (%s)", i+1, item.Name, item.Artist, item.Duration)
+				}
+			}
+			return &mcp.CallToolResult{
+				Content: []mcp.Content{&mcp.TextContent{Text: text}},
+			}, map[string]any{"playlist": playlist}, nil
+		}
+		return nil, nil, fmt.Errorf("playlist '%s' not found on any service", input.ID)
+	})
+
+	// searchMedia: try each service until results found
+	mcp.AddTool(server, &mcp.Tool{
+		Name:        "searchMedia",
+		Description: "Search for media items (songs, albums, artists) across media servers. Specify types like 'Audio', 'MusicAlbum', 'MusicArtist', or leave empty to search all.",
+		InputSchema: map[string]any{
+			"type": "object",
+			"properties": map[string]any{
+				"query":      map[string]any{"type": "string", "description": "The search query."},
+				"mediaTypes": map[string]any{"type": "array", "items": map[string]any{"type": "string"}, "description": "Filter by media types (e.g. ['Audio', 'MusicAlbum']). Empty = all."},
+				"limit":      map[string]any{"type": "integer", "description": "Maximum number of results (default: 20)."},
+			},
+			"required": []string{"query"},
+		},
+	}, func(ctx context.Context, _ *mcp.CallToolRequest, input struct {
+		Query      string   `json:"query"`
+		MediaTypes []string `json:"mediaTypes,omitempty"`
+		Limit      int      `json:"limit,omitempty"`
+	}) (*mcp.CallToolResult, any, error) {
+		if input.Limit <= 0 {
+			input.Limit = 20
+		}
+		for _, ms := range services {
+			items, err := ms.SearchItems(ctx, input.Query, input.MediaTypes, input.Limit)
+			if err != nil {
+				continue
+			}
+			text := formatMediaItemsText(items)
+			return &mcp.CallToolResult{
+				Content: []mcp.Content{&mcp.TextContent{Text: text}},
+			}, map[string]any{"items": items}, nil
+		}
+		return nil, nil, fmt.Errorf("no results found for '%s'", input.Query)
+	})
+
+	// getRecentlyPlayed: try each service until results found
+	mcp.AddTool(server, &mcp.Tool{
+		Name:        "getRecentlyPlayed",
+		Description: "Get recently played media items for the current user.",
+		InputSchema: map[string]any{
+			"type": "object",
+			"properties": map[string]any{
+				"limit": map[string]any{"type": "integer", "description": "Maximum number of items (default: 10)."},
+			},
+		},
+	}, func(ctx context.Context, _ *mcp.CallToolRequest, input struct {
+		Limit int `json:"limit,omitempty"`
+	}) (*mcp.CallToolResult, any, error) {
+		if input.Limit <= 0 {
+			input.Limit = 10
+		}
+		for _, ms := range services {
+			items, err := ms.GetRecentlyPlayed(ctx, input.Limit)
+			if err != nil {
+				continue
+			}
+			text := formatMediaItemsText(items)
+			return &mcp.CallToolResult{
+				Content: []mcp.Content{&mcp.TextContent{Text: text}},
+			}, map[string]any{"items": items}, nil
+		}
+		return nil, nil, fmt.Errorf("no recently played items found")
+	})
+}
+
+func formatPlaylistsText(playlists []*media.PlaylistSummary) string {
+	if len(playlists) == 0 {
+		return "No playlists found."
+	}
+	result := fmt.Sprintf("%d playlists:\n", len(playlists))
+	for _, p := range playlists {
+		result += fmt.Sprintf("  %s | %s | %d items | %s\n", p.Name, p.ID, p.ItemCount, p.Duration)
+	}
+	return result
+}
+
+func formatMediaItemsText(items []*media.MediaItem) string {
+	if len(items) == 0 {
+		return "No items found."
+	}
+	result := fmt.Sprintf("%d items:\n", len(items))
+	for _, item := range items {
+		result += fmt.Sprintf("  %s — %s (%s) [%s]\n", item.Name, item.Artist, item.Duration, item.Type)
+		if len(item.Genres) > 0 {
+			result += fmt.Sprintf("    Genres: %v\n", item.Genres)
+		}
+	}
+	return result
 }
 
 func formatLightsText(lights []*smarthome.Light) string {

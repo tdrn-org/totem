@@ -28,7 +28,7 @@ import (
 
 var includePlaylists []jellyfinapi.BaseItemKind = []jellyfinapi.BaseItemKind{jellyfinapi.BASEITEMKIND_PLAYLIST}
 
-func (s jellyfinService) ListPlaylists(ctx context.Context) ([]*media.Playlist, error) {
+func (s jellyfinService) ListPlaylists(ctx context.Context) ([]*media.PlaylistSummary, error) {
 	apiResponse, httpResponse, err := s.apiClient.ItemsAPI.
 		GetItems(ctx).
 		UserId(s.config.
@@ -42,9 +42,9 @@ func (s jellyfinService) ListPlaylists(ctx context.Context) ([]*media.Playlist, 
 	if httpResponse.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("failed to get playlists from Jellyfin (status: %s)", httpResponse.Status)
 	}
-	playlists := make([]*media.Playlist, 0, len(apiResponse.Items))
+	playlists := make([]*media.PlaylistSummary, 0, len(apiResponse.Items))
 	for _, item := range apiResponse.Items {
-		playlist := &media.Playlist{
+		playlist := &media.PlaylistSummary{
 			ID:        *item.Id,
 			Name:      *item.Name.Get(),
 			Duration:  time.Duration(item.GetRunTimeTicks()),
