@@ -16,5 +16,22 @@
 
 package lan
 
+import (
+	"context"
+	"net"
+
+	"github.com/tdrn-org/totem/internal/domain"
+)
+
+type LanDevice struct {
+	MAC      net.HardwareAddr // Normalisiert im Adapter
+	Name     string
+	Active   bool
+	IP       string
+	Location *domain.Location
+}
+
 type LanService interface {
+	ListDevices(ctx context.Context) ([]*LanDevice, error)
+	GetDevice(ctx context.Context, mac net.HardwareAddr) (*LanDevice, error)
 }

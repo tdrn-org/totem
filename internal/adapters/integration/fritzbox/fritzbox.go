@@ -37,6 +37,7 @@ func Register(host integration.Host, config Config) (integration.Service, error)
 	serviceID := integration.NewServiceID(Name, tr064Client.DeviceUrl.Redacted())
 	s := &fritzboxService{
 		config:      config,
+		host:        host,
 		serviceID:   serviceID,
 		tr064Client: tr064Client,
 		logger:      slog.With(slog.String("serviceID", serviceID)),
@@ -47,6 +48,7 @@ func Register(host integration.Host, config Config) (integration.Service, error)
 
 type fritzboxService struct {
 	config      Config
+	host        integration.Host
 	serviceID   string
 	tr064Client *tr064.Client
 	logger      *slog.Logger
