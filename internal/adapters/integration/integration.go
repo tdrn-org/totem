@@ -50,6 +50,8 @@ const (
 	NatureSmarthome Nature = "smarthome"
 	// NatureMedia is defined by media services providing media access.
 	NatureMedia Nature = "media"
+	// NatureLan is defined by routers providing LAN access and routing.
+	NatureLan Nature = "lan"
 )
 
 type Service interface {
