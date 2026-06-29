@@ -20,19 +20,19 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"time"
 
 	jellyfinapi "github.com/sj14/jellyfin-go/api"
 	"github.com/tdrn-org/totem/internal/domain/media"
 )
 
-var includePlaylists []jellyfinapi.BaseItemKind = []jellyfinapi.BaseItemKind{jellyfinapi.BASEITEMKIND_PLAYLIST}
+var filterPlaylists []jellyfinapi.BaseItemKind = []jellyfinapi.BaseItemKind{jellyfinapi.BASEITEMKIND_PLAYLIST}
+var filterAudio []jellyfinapi.BaseItemKind = []jellyfinapi.BaseItemKind{jellyfinapi.BASEITEMKIND_AUDIO}
 
-func (s jellyfinService) ListPlaylists(ctx context.Context) ([]*media.PlaylistSummary, error) {
+func (s *jellyfinService) ListPlaylists(ctx context.Context) ([]*media.PlaylistSummary, error) {
 	apiResponse, httpResponse, err := s.apiClient.ItemsAPI.
 		GetItems(ctx).
 		UserId(s.config.UserID()).
-		IncludeItemTypes(includePlaylists).
+		IncludeItemTypes(filterPlaylists).
 		Recursive(true).
 		Execute()
 	if err != nil {
@@ -54,7 +54,7 @@ func (s jellyfinService) ListPlaylists(ctx context.Context) ([]*media.PlaylistSu
 	return playlists, nil
 }
 
-func (s jellyfinService) GetPlaylist(ctx context.Context, id string) (*media.Playlist, error) {
+func (s *jellyfinService) GetPlaylist(ctx context.Context, id string) (*media.Playlist, error) {
 	apiResponse, httpResponse, err := s.apiClient.UserLibraryAPI.
 		GetItem(ctx, id).
 		UserId(s.config.UserID()).
@@ -79,7 +79,7 @@ func (s jellyfinService) GetPlaylist(ctx context.Context, id string) (*media.Pla
 	return playlist, nil
 }
 
-func (s jellyfinService) getPlaylistItems(ctx context.Context, id string) ([]*media.MediaItem, error) {
+func (s *jellyfinService) getPlaylistItems(ctx context.Context, id string) ([]*media.MediaItem, error) {
 	apiResponse, httpResponse, err := s.apiClient.PlaylistsAPI.
 		GetPlaylistItems(ctx, id).
 		UserId(s.config.UserID()).
@@ -107,24 +107,46 @@ func (s jellyfinService) getPlaylistItems(ctx context.Context, id string) ([]*me
 	return mediaItems, nil
 }
 
-func (s jellyfinService) AddToPlaylist(ctx context.Context, playlistID string, itemIDs []string) (*media.Playlist, error) {
+func (s *jellyfinService) AddToPlaylist(ctx context.Context, playlistID string, itemIDs []string) (*media.Playlist, error) {
 	return nil, nil
 }
 
-func (s jellyfinService) RemoveFromPlaylist(ctx context.Context, playlistID string, itemIDs []string) (*media.Playlist, error) {
+func (s *jellyfinService) RemoveFromPlaylist(ctx context.Context, playlistID string, itemIDs []string) (*media.Playlist, error) {
 	return nil, nil
 }
 
-func (s jellyfinService) SearchItems(ctx context.Context, query string, mediaTypes []string, limit int) ([]*media.MediaItem, error) {
-	return nil, nil
+func (s *jellyfinService) SearchItems(ctx context.Context, query string, mediaTypes []string, limit int) ([]*media.MediaItem, error) {
+	apiResponse, httpResponse, err := s.apiClient.ItemsAPI.
+		GetItems(ctx).
+		UserId(s.config.UserID()).
+		IncludeItemTypes(filterAudio).
+		SearchTerm(query).
+		Recursive(true).
+		Limit(int32(limit)).
+		Execute()
+	if err != nil {
+		return nil, fmt.Errorf("failed request playlists from Jellyfin (cause: %w)", err)
+	}
+	if httpResponse.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("failed to get playlists from Jellyfin (status: %s)", httpResponse.Status)
+	}
+	mediaItems := make([]*media.MediaItem, 0, len(apiResponse.Items))
+	for _, item := range apiResponse.Items {
+		mediaItem := &media.MediaItem{
+			ID:       *item.Id,
+			Name:     item.GetName(),
+			Type:     string(*item.Type),
+			Artists:  item.Artists,
+			Album:    *item.Album.Get(),
+			Duration: ticksToDuration(item.GetRunTimeTicks()),
+			Genres:   item.Genres,
+			// TODO: ImageURL: "",
+		}
+		mediaItems = append(mediaItems, mediaItem)
+	}
+	return mediaItems, nil
 }
 
-func (s jellyfinService) GetRecentlyPlayed(ctx context.Context, limit int) ([]*media.MediaItem, error) {
+func (s *jellyfinService) GetRecentlyPlayed(ctx context.Context, limit int) ([]*media.MediaItem, error) {
 	return nil, nil
-}
-
-// ticksToDuration converts Jellyfin RunTimeTicks (100-nanosecond units)
-// to Go's time.Duration (nanoseconds).
-func ticksToDuration(ticks int64) time.Duration {
-	return time.Duration(ticks * 100)
 }
