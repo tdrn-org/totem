@@ -25,14 +25,16 @@ import (
 	"github.com/tdrn-org/totem/internal/domain/media"
 )
 
-var filterPlaylists []jellyfinapi.BaseItemKind = []jellyfinapi.BaseItemKind{jellyfinapi.BASEITEMKIND_PLAYLIST}
-var filterAudio []jellyfinapi.BaseItemKind = []jellyfinapi.BaseItemKind{jellyfinapi.BASEITEMKIND_AUDIO}
+var includePlaylists []jellyfinapi.BaseItemKind = []jellyfinapi.BaseItemKind{jellyfinapi.BASEITEMKIND_PLAYLIST}
+var includeAudio []jellyfinapi.BaseItemKind = []jellyfinapi.BaseItemKind{jellyfinapi.BASEITEMKIND_AUDIO}
+
+var filterIsPlayed []jellyfinapi.ItemFilter = []jellyfinapi.ItemFilter{jellyfinapi.ITEMFILTER_IS_PLAYED}
 
 func (s *jellyfinService) ListPlaylists(ctx context.Context) ([]*media.PlaylistSummary, error) {
 	apiResponse, httpResponse, err := s.apiClient.ItemsAPI.
 		GetItems(ctx).
 		UserId(s.config.UserID()).
-		IncludeItemTypes(filterPlaylists).
+		IncludeItemTypes(includePlaylists).
 		Recursive(true).
 		Execute()
 	if err != nil {
@@ -108,27 +110,49 @@ func (s *jellyfinService) getPlaylistItems(ctx context.Context, id string) ([]*m
 }
 
 func (s *jellyfinService) AddToPlaylist(ctx context.Context, playlistID string, itemIDs []string) (*media.Playlist, error) {
-	return nil, nil
+	httpResponse, err := s.apiClient.PlaylistsAPI.
+		AddItemToPlaylist(ctx, playlistID).
+		UserId(s.config.UserID()).
+		Ids(itemIDs).
+		Execute()
+	if err != nil {
+		return nil, fmt.Errorf("failed to request add to playlist from Jellyfin (cause: %w)", err)
+	}
+	if httpResponse.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("failed to add playlist items from Jellyfin (status: %s)", httpResponse.Status)
+	}
+	return s.GetPlaylist(ctx, playlistID)
 }
 
 func (s *jellyfinService) RemoveFromPlaylist(ctx context.Context, playlistID string, itemIDs []string) (*media.Playlist, error) {
-	return nil, nil
+	httpResponse, err := s.apiClient.PlaylistsAPI.
+		RemoveItemFromPlaylist(ctx, playlistID).
+		EntryIds(itemIDs).
+		Execute()
+	if err != nil {
+		return nil, fmt.Errorf("failed to request add to playlist from Jellyfin (cause: %w)", err)
+	}
+	if httpResponse.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("failed to add playlist items from Jellyfin (status: %s)", httpResponse.Status)
+	}
+	return s.GetPlaylist(ctx, playlistID)
 }
 
 func (s *jellyfinService) SearchItems(ctx context.Context, query string, mediaTypes []string, limit int) ([]*media.MediaItem, error) {
+	// TODO: Use mediaTypes for filtering
 	apiResponse, httpResponse, err := s.apiClient.ItemsAPI.
 		GetItems(ctx).
 		UserId(s.config.UserID()).
-		IncludeItemTypes(filterAudio).
+		IncludeItemTypes(includeAudio).
 		SearchTerm(query).
 		Recursive(true).
 		Limit(int32(limit)).
 		Execute()
 	if err != nil {
-		return nil, fmt.Errorf("failed request playlists from Jellyfin (cause: %w)", err)
+		return nil, fmt.Errorf("failed request items from Jellyfin (cause: %w)", err)
 	}
 	if httpResponse.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("failed to get playlists from Jellyfin (status: %s)", httpResponse.Status)
+		return nil, fmt.Errorf("failed to get items from Jellyfin (status: %s)", httpResponse.Status)
 	}
 	mediaItems := make([]*media.MediaItem, 0, len(apiResponse.Items))
 	for _, item := range apiResponse.Items {
@@ -148,5 +172,35 @@ func (s *jellyfinService) SearchItems(ctx context.Context, query string, mediaTy
 }
 
 func (s *jellyfinService) GetRecentlyPlayed(ctx context.Context, limit int) ([]*media.MediaItem, error) {
-	return nil, nil
+	apiResponse, httpResponse, err := s.apiClient.ItemsAPI.
+		GetItems(ctx).
+		UserId(s.config.UserID()).
+		IncludeItemTypes(includeAudio).
+		Filters(filterIsPlayed).
+		Recursive(true).
+		SortBy([]jellyfinapi.ItemSortBy{jellyfinapi.ITEMSORTBY_DATE_PLAYED}).
+		SortOrder([]jellyfinapi.SortOrder{jellyfinapi.SORTORDER_DESCENDING}).
+		Limit(int32(limit)).
+		Execute()
+	if err != nil {
+		return nil, fmt.Errorf("failed request recently played from Jellyfin (cause: %w)", err)
+	}
+	if httpResponse.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("failed to get recently played from Jellyfin (status: %s)", httpResponse.Status)
+	}
+	mediaItems := make([]*media.MediaItem, 0, len(apiResponse.Items))
+	for _, item := range apiResponse.Items {
+		mediaItem := &media.MediaItem{
+			ID:       *item.Id,
+			Name:     item.GetName(),
+			Type:     string(*item.Type),
+			Artists:  item.Artists,
+			Album:    *item.Album.Get(),
+			Duration: ticksToDuration(item.GetRunTimeTicks()),
+			Genres:   item.Genres,
+			// TODO: ImageURL: "",
+		}
+		mediaItems = append(mediaItems, mediaItem)
+	}
+	return mediaItems, nil
 }
