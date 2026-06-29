@@ -108,7 +108,6 @@ func (s *huebridgeService) ListSensors(ctx context.Context) ([]*smarthome.Sensor
 	location := s.host.ResolveLocationID(s.config.LocationID())
 	deviceNames := s.resolveDeviceNames(ctx, bridgeClient)
 	batteryLevels := s.resolveBatteryLevels(ctx, bridgeClient)
-
 	response, err := bridgeClient.GetTemperatures(ctx)
 	if err != nil {
 		s.taintBridgeClient()
@@ -162,6 +161,55 @@ func (s *huebridgeService) GetSensor(ctx context.Context, id string) (*smarthome
 		Temperature:  temp,
 		BatteryLevel: batteryLevels[t.Owner.Rid],
 		Location:     location,
+	}, nil
+}
+
+func (s *huebridgeService) ListMotionSensors(ctx context.Context) ([]*smarthome.MotionSensor, error) {
+	bridgeClient, err := s.resolveBridgeClient()
+	if err != nil {
+		return nil, err
+	}
+	location := s.host.ResolveLocationID(s.config.LocationID())
+	deviceNames := s.resolveDeviceNames(ctx, bridgeClient)
+	response, err := bridgeClient.GetMotionSensors(ctx)
+	if err != nil {
+		s.taintBridgeClient()
+		return nil, fmt.Errorf("failed to get motion sensors from Hue Bridge (cause: %w)", err)
+	}
+	sensors := make([]*smarthome.MotionSensor, 0, len(response.JSON200.Data))
+	for _, m := range response.JSON200.Data {
+		sensor := &smarthome.MotionSensor{
+			ID:       m.Id,
+			Name:     deviceName(deviceNames, m.Owner.Rid, m.Id),
+			Motion:   m.Motion.MotionValid && m.Motion.Motion,
+			Location: location,
+		}
+		sensors = append(sensors, sensor)
+	}
+	return sensors, nil
+}
+
+func (s *huebridgeService) GetMotion(ctx context.Context, id string) (*smarthome.MotionSensor, error) {
+	bridgeClient, err := s.resolveBridgeClient()
+	if err != nil {
+		return nil, err
+	}
+	location := s.host.ResolveLocationID(s.config.LocationID())
+	response, err := bridgeClient.GetMotionSensor(ctx, id)
+	if err != nil {
+		s.taintBridgeClient()
+		return nil, fmt.Errorf("failed to get motion from Hue Bridge (cause: %w)", err)
+	}
+	if len(response.JSON200.Data) == 0 {
+		return nil, fmt.Errorf("no motion data from Hue Bridge")
+	}
+	deviceNames := s.resolveDeviceNames(ctx, bridgeClient)
+	m := response.JSON200.Data[0]
+	return &smarthome.MotionSensor{
+		ID:       m.Id,
+		Name:     deviceName(deviceNames, m.Owner.Rid, m.Id),
+		Motion:   m.Motion.MotionValid && m.Motion.Motion,
+		Location: location,
 	}, nil
 }
 
