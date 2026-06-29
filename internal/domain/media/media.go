@@ -32,6 +32,10 @@ type MediaService interface {
 	// GetPlaylist returns a single playlist including all its items.
 	GetPlaylist(ctx context.Context, id string) (*Playlist, error)
 
+	// CreatePlaylist creates an playlist with the given name and the given items.
+	// At least one item must be added during create.
+	CreatePlaylist(ctx context.Context, name string, itemIDs []string) (*Playlist, error)
+
 	// AddToPlaylist adds one or more items to a playlist.
 	// Returns the updated playlist.
 	AddToPlaylist(ctx context.Context, playlistID string, itemIDs []string) (*Playlist, error)

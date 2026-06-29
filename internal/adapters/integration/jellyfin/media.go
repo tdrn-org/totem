@@ -38,10 +38,10 @@ func (s *jellyfinService) ListPlaylists(ctx context.Context) ([]*media.PlaylistS
 		Recursive(true).
 		Execute()
 	if err != nil {
-		return nil, fmt.Errorf("failed request playlists from Jellyfin (cause: %w)", err)
+		return nil, fmt.Errorf("failed request 'list playlists' via Jellyfin (cause: %w)", err)
 	}
 	if httpResponse.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("failed to get playlists from Jellyfin (status: %s)", httpResponse.Status)
+		return nil, fmt.Errorf("failed command 'list playlists' via Jellyfin (status: %s)", httpResponse.Status)
 	}
 	playlists := make([]*media.PlaylistSummary, 0, len(apiResponse.Items))
 	for _, item := range apiResponse.Items {
@@ -62,10 +62,10 @@ func (s *jellyfinService) GetPlaylist(ctx context.Context, id string) (*media.Pl
 		UserId(s.config.UserID()).
 		Execute()
 	if err != nil {
-		return nil, fmt.Errorf("failed request playlist from Jellyfin (cause: %w)", err)
+		return nil, fmt.Errorf("failed request 'get playlist' via Jellyfin (cause: %w)", err)
 	}
 	if httpResponse.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("failed to get playlist from Jellyfin (status: %s)", httpResponse.Status)
+		return nil, fmt.Errorf("failed command 'get playlist' via Jellyfin (status: %s)", httpResponse.Status)
 	}
 	mediaItems, err := s.getPlaylistItems(ctx, id)
 	if err != nil {
@@ -87,10 +87,10 @@ func (s *jellyfinService) getPlaylistItems(ctx context.Context, id string) ([]*m
 		UserId(s.config.UserID()).
 		Execute()
 	if err != nil {
-		return nil, fmt.Errorf("failed request playlist items from Jellyfin (cause: %w)", err)
+		return nil, fmt.Errorf("failed request 'get playlist items' via Jellyfin (cause: %w)", err)
 	}
 	if httpResponse.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("failed to get playlist items from Jellyfin (status: %s)", httpResponse.Status)
+		return nil, fmt.Errorf("failed command 'get playlist items' via Jellyfin (status: %s)", httpResponse.Status)
 	}
 	mediaItems := make([]*media.MediaItem, 0, len(apiResponse.Items))
 	for _, item := range apiResponse.Items {
@@ -109,6 +109,23 @@ func (s *jellyfinService) getPlaylistItems(ctx context.Context, id string) ([]*m
 	return mediaItems, nil
 }
 
+func (s *jellyfinService) CreatePlaylist(ctx context.Context, name string, itemIDs []string) (*media.Playlist, error) {
+	apiResponse, httpResponse, err := s.apiClient.PlaylistsAPI.
+		CreatePlaylist(ctx).
+		UserId(s.config.UserID()).
+		Name(name).
+		Ids(itemIDs).
+		MediaType(jellyfinapi.MEDIATYPE_AUDIO).
+		Execute()
+	if err != nil {
+		return nil, fmt.Errorf("failed request 'create playlist' via Jellyfin (cause: %w)", err)
+	}
+	if httpResponse.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("failed command 'create playlist' via Jellyfin (status: %s)", httpResponse.Status)
+	}
+	return s.GetPlaylist(ctx, *apiResponse.Id)
+}
+
 func (s *jellyfinService) AddToPlaylist(ctx context.Context, playlistID string, itemIDs []string) (*media.Playlist, error) {
 	httpResponse, err := s.apiClient.PlaylistsAPI.
 		AddItemToPlaylist(ctx, playlistID).
@@ -116,10 +133,10 @@ func (s *jellyfinService) AddToPlaylist(ctx context.Context, playlistID string, 
 		Ids(itemIDs).
 		Execute()
 	if err != nil {
-		return nil, fmt.Errorf("failed to request add to playlist from Jellyfin (cause: %w)", err)
+		return nil, fmt.Errorf("failed request 'add to playlist' via Jellyfin (cause: %w)", err)
 	}
 	if httpResponse.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("failed to add playlist items from Jellyfin (status: %s)", httpResponse.Status)
+		return nil, fmt.Errorf("failed command 'add to playlist' via Jellyfin (status: %s)", httpResponse.Status)
 	}
 	return s.GetPlaylist(ctx, playlistID)
 }
@@ -130,10 +147,10 @@ func (s *jellyfinService) RemoveFromPlaylist(ctx context.Context, playlistID str
 		EntryIds(itemIDs).
 		Execute()
 	if err != nil {
-		return nil, fmt.Errorf("failed to request add to playlist from Jellyfin (cause: %w)", err)
+		return nil, fmt.Errorf("failed request 'remove from playlist' via Jellyfin (cause: %w)", err)
 	}
 	if httpResponse.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("failed to add playlist items from Jellyfin (status: %s)", httpResponse.Status)
+		return nil, fmt.Errorf("failed command 'remove from playlist' via Jellyfin (status: %s)", httpResponse.Status)
 	}
 	return s.GetPlaylist(ctx, playlistID)
 }
@@ -149,10 +166,10 @@ func (s *jellyfinService) SearchItems(ctx context.Context, query string, mediaTy
 		Limit(int32(limit)).
 		Execute()
 	if err != nil {
-		return nil, fmt.Errorf("failed request items from Jellyfin (cause: %w)", err)
+		return nil, fmt.Errorf("failed request 'search items' via Jellyfin (cause: %w)", err)
 	}
 	if httpResponse.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("failed to get items from Jellyfin (status: %s)", httpResponse.Status)
+		return nil, fmt.Errorf("failed command 'search items' via Jellyfin (status: %s)", httpResponse.Status)
 	}
 	mediaItems := make([]*media.MediaItem, 0, len(apiResponse.Items))
 	for _, item := range apiResponse.Items {
@@ -183,10 +200,10 @@ func (s *jellyfinService) GetRecentlyPlayed(ctx context.Context, limit int) ([]*
 		Limit(int32(limit)).
 		Execute()
 	if err != nil {
-		return nil, fmt.Errorf("failed request recently played from Jellyfin (cause: %w)", err)
+		return nil, fmt.Errorf("failed request 'get recently played' via Jellyfin (cause: %w)", err)
 	}
 	if httpResponse.StatusCode != http.StatusOK {
-		return nil, fmt.Errorf("failed to get recently played from Jellyfin (status: %s)", httpResponse.Status)
+		return nil, fmt.Errorf("failed command 'get recently played' via Jellyfin (status: %s)", httpResponse.Status)
 	}
 	mediaItems := make([]*media.MediaItem, 0, len(apiResponse.Items))
 	for _, item := range apiResponse.Items {
