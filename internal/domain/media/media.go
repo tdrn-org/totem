@@ -16,6 +16,57 @@
 
 package media
 
-// MediaServices defines the operations for media servers.
+import (
+	"context"
+	"time"
+)
+
+// MediaService defines the operations for media servers.
+// A media server provides access to music, playlists, and playback history.
+// It is location-less — media follows the user wherever they are.
 type MediaService interface {
+	// ListPlaylists returns all playlists available on the media server.
+	ListPlaylists(ctx context.Context) ([]*Playlist, error)
+
+	// GetPlaylist returns a single playlist including all its items.
+	GetPlaylist(ctx context.Context, id string) (*Playlist, error)
+
+	// AddToPlaylist adds one or more items to a playlist.
+	// Returns the updated playlist.
+	AddToPlaylist(ctx context.Context, playlistID string, itemIDs []string) (*Playlist, error)
+
+	// RemoveFromPlaylist removes one or more items from a playlist.
+	// Returns the updated playlist.
+	RemoveFromPlaylist(ctx context.Context, playlistID string, itemIDs []string) (*Playlist, error)
+
+	// SearchItems searches for media items matching the query.
+	// mediaTypes can filter by type (e.g. "Audio", "MusicAlbum", "MusicArtist").
+	// An empty mediaTypes slice searches all types.
+	SearchItems(ctx context.Context, query string, mediaTypes []string, limit int) ([]*MediaItem, error)
+
+	// GetRecentlyPlayed returns recently played items for the configured user.
+	GetRecentlyPlayed(ctx context.Context, limit int) ([]*MediaItem, error)
+}
+
+// Playlist represents a named, ordered collection of media items.
+type Playlist struct {
+	ID        string
+	Name      string
+	Duration  time.Duration
+	ItemCount int
+	Items     []*MediaItem
+}
+
+// MediaItem represents a single media entity.
+// Depending on Type, this can be a song ("Audio"), an album ("MusicAlbum"),
+// or an artist ("MusicArtist").
+type MediaItem struct {
+	ID       string
+	Name     string
+	Type     string
+	Artist   string
+	Album    string
+	Duration time.Duration
+	Genres   []string
+	ImageURL string
 }
