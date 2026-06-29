@@ -284,7 +284,7 @@ func registerMediaAPI(server *mcp.Server, services []media.MediaService, logger 
 			if len(playlist.Items) > 0 {
 				text += "\n\nTracks:"
 				for i, item := range playlist.Items {
-					text += fmt.Sprintf("\n  %d. %s — %s (%s)", i+1, item.Name, item.Artist, item.Duration)
+					text += fmt.Sprintf("\n  %d. %s — %s (%s)", i+1, item.Name, item.Artists, item.Duration)
 				}
 			}
 			return &mcp.CallToolResult{
@@ -375,7 +375,7 @@ func formatMediaItemsText(items []*media.MediaItem) string {
 	}
 	result := fmt.Sprintf("%d items:\n", len(items))
 	for _, item := range items {
-		result += fmt.Sprintf("  %s — %s (%s) [%s]\n", item.Name, item.Artist, item.Duration, item.Type)
+		result += fmt.Sprintf("  %s — %s (%s) [%s]\n", item.Name, item.Artists, item.Duration, item.Type)
 		if len(item.Genres) > 0 {
 			result += fmt.Sprintf("    Genres: %v\n", item.Genres)
 		}

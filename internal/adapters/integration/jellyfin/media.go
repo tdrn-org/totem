@@ -31,8 +31,7 @@ var includePlaylists []jellyfinapi.BaseItemKind = []jellyfinapi.BaseItemKind{jel
 func (s jellyfinService) ListPlaylists(ctx context.Context) ([]*media.PlaylistSummary, error) {
 	apiResponse, httpResponse, err := s.apiClient.ItemsAPI.
 		GetItems(ctx).
-		UserId(s.config.
-			UserID()).
+		UserId(s.config.UserID()).
 		IncludeItemTypes(includePlaylists).
 		Recursive(true).
 		Execute()
@@ -56,7 +55,56 @@ func (s jellyfinService) ListPlaylists(ctx context.Context) ([]*media.PlaylistSu
 }
 
 func (s jellyfinService) GetPlaylist(ctx context.Context, id string) (*media.Playlist, error) {
-	return nil, nil
+	apiResponse, httpResponse, err := s.apiClient.UserLibraryAPI.
+		GetItem(ctx, id).
+		UserId(s.config.UserID()).
+		Execute()
+	if err != nil {
+		return nil, fmt.Errorf("failed request playlist from Jellyfin (cause: %w)", err)
+	}
+	if httpResponse.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("failed to get playlist from Jellyfin (status: %s)", httpResponse.Status)
+	}
+	mediaItems, err := s.getPlaylistItems(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	playlist := &media.Playlist{
+		ID:        *apiResponse.Id,
+		Name:      apiResponse.GetName(),
+		Duration:  time.Duration(apiResponse.GetRunTimeTicks()),
+		ItemCount: len(mediaItems),
+		Items:     mediaItems,
+	}
+	return playlist, nil
+}
+
+func (s jellyfinService) getPlaylistItems(ctx context.Context, id string) ([]*media.MediaItem, error) {
+	apiResponse, httpResponse, err := s.apiClient.PlaylistsAPI.
+		GetPlaylistItems(ctx, id).
+		UserId(s.config.UserID()).
+		Execute()
+	if err != nil {
+		return nil, fmt.Errorf("failed request playlist items from Jellyfin (cause: %w)", err)
+	}
+	if httpResponse.StatusCode != http.StatusOK {
+		return nil, fmt.Errorf("failed to get playlist items from Jellyfin (status: %s)", httpResponse.Status)
+	}
+	mediaItems := make([]*media.MediaItem, 0, len(apiResponse.Items))
+	for _, item := range apiResponse.Items {
+		mediaItem := &media.MediaItem{
+			ID:       *item.Id,
+			Name:     *item.Name.Get(),
+			Type:     string(*item.Type),
+			Artists:  item.Artists,
+			Album:    *item.Album.Get(),
+			Duration: time.Duration(item.GetRunTimeTicks()),
+			Genres:   item.Genres,
+			// TODO: ImageURL: "",
+		}
+		mediaItems = append(mediaItems, mediaItem)
+	}
+	return mediaItems, nil
 }
 
 func (s jellyfinService) AddToPlaylist(ctx context.Context, playlistID string, itemIDs []string) (*media.Playlist, error) {

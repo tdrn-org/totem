@@ -75,7 +75,7 @@ type MediaItem struct {
 	ID       string
 	Name     string
 	Type     string
-	Artist   string
+	Artists  []string
 	Album    string
 	Duration time.Duration
 	Genres   []string
