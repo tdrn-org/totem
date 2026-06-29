@@ -46,7 +46,7 @@ func (s jellyfinService) ListPlaylists(ctx context.Context) ([]*media.PlaylistSu
 		playlist := &media.PlaylistSummary{
 			ID:        *item.Id,
 			Name:      *item.Name.Get(),
-			Duration:  time.Duration(item.GetRunTimeTicks()),
+			Duration:  ticksToDuration(item.GetRunTimeTicks()),
 			ItemCount: int(item.GetChildCount()),
 		}
 		playlists = append(playlists, playlist)
@@ -72,7 +72,7 @@ func (s jellyfinService) GetPlaylist(ctx context.Context, id string) (*media.Pla
 	playlist := &media.Playlist{
 		ID:        *apiResponse.Id,
 		Name:      apiResponse.GetName(),
-		Duration:  time.Duration(apiResponse.GetRunTimeTicks()),
+		Duration:  ticksToDuration(apiResponse.GetRunTimeTicks()),
 		ItemCount: len(mediaItems),
 		Items:     mediaItems,
 	}
@@ -98,7 +98,7 @@ func (s jellyfinService) getPlaylistItems(ctx context.Context, id string) ([]*me
 			Type:     string(*item.Type),
 			Artists:  item.Artists,
 			Album:    *item.Album.Get(),
-			Duration: time.Duration(item.GetRunTimeTicks()),
+			Duration: ticksToDuration(item.GetRunTimeTicks()),
 			Genres:   item.Genres,
 			// TODO: ImageURL: "",
 		}
@@ -121,4 +121,10 @@ func (s jellyfinService) SearchItems(ctx context.Context, query string, mediaTyp
 
 func (s jellyfinService) GetRecentlyPlayed(ctx context.Context, limit int) ([]*media.MediaItem, error) {
 	return nil, nil
+}
+
+// ticksToDuration converts Jellyfin RunTimeTicks (100-nanosecond units)
+// to Go's time.Duration (nanoseconds).
+func ticksToDuration(ticks int64) time.Duration {
+	return time.Duration(ticks * 100)
 }
