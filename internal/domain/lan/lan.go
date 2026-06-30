@@ -19,15 +19,16 @@ package lan
 import (
 	"context"
 	"net"
+	"net/netip"
 
 	"github.com/tdrn-org/totem/internal/domain"
 )
 
 type LanDevice struct {
 	MAC      net.HardwareAddr // Normalisiert im Adapter
-	Name     string
 	Active   bool
-	IP       string
+	Name     string
+	IP       netip.Addr
 	Location *domain.Location
 }
 

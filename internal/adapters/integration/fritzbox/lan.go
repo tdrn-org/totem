@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"log/slog"
 	"net"
+	"net/netip"
+	"slices"
 
 	"github.com/tdrn-org/go-tr064"
 	"github.com/tdrn-org/go-tr064/services/tr64desc/hosts"
@@ -12,41 +14,71 @@ import (
 )
 
 func (s *fritzboxService) ListDevices(ctx context.Context) ([]*lan.LanDevice, error) {
+	return s.filterDevices(ctx, nil)
+}
+
+func (s *fritzboxService) GetDevice(ctx context.Context, mac net.HardwareAddr) (*lan.LanDevice, error) {
+	devices, err := s.filterDevices(ctx, mac)
+	if err != nil {
+		return nil, err
+	}
+	if len(devices) == 0 {
+		device := &lan.LanDevice{
+			MAC:      mac,
+			Active:   false,
+			Location: s.host.ResolveLocationID(s.config.LocationID()),
+		}
+		return device, nil
+	}
+	return devices[0], nil
+}
+
+func (s *fritzboxService) filterDevices(ctx context.Context, filterMac net.HardwareAddr) ([]*lan.LanDevice, error) {
 	serviceClient := s.hostsClient()
-	hostNumberOfEntriesResponse := &hosts.GetHostNumberOfEntriesResponse{}
-	err := serviceClient.GetHostNumberOfEntries(hostNumberOfEntriesResponse)
+	ghnoeOut := &hosts.GetHostNumberOfEntriesResponse{}
+	err := serviceClient.GetHostNumberOfEntries(ghnoeOut)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get host count from FRITZ!Box (cause: %w)", err)
 	}
-	entryCount := hostNumberOfEntriesResponse.NewHostNumberOfEntries
+	entryCount := ghnoeOut.NewHostNumberOfEntries
 	devices := make([]*lan.LanDevice, 0, int(entryCount))
 	for entryIndex := uint16(0); entryIndex < entryCount; entryIndex++ {
-		genericHostEntryRequest := &hosts.GetGenericHostEntryRequest{NewIndex: entryIndex}
-		genericHostEntryResponse := &hosts.GetGenericHostEntryResponse{}
-		err = serviceClient.GetGenericHostEntry(genericHostEntryRequest, genericHostEntryResponse)
+		ggheIn := &hosts.GetGenericHostEntryRequest{NewIndex: entryIndex}
+		ggheOut := &hosts.GetGenericHostEntryResponse{}
+		err = serviceClient.GetGenericHostEntry(ggheIn, ggheOut)
 		if err != nil {
 			return nil, fmt.Errorf("failed to get host entry from FRITZ!Box (cause: %w)", err)
 		}
-		macString := genericHostEntryResponse.NewMACAddress
+		macString := ggheOut.NewMACAddress
+		if macString == "" {
+			continue
+		}
 		mac, err := net.ParseMAC(macString)
 		if err != nil {
 			s.logger.Warn("unable to parse host hardware address; ignoring host", slog.String("mac", macString))
 			continue
 		}
-		device := &lan.LanDevice{
-			MAC:      mac,
-			Name:     genericHostEntryResponse.NewHostName,
-			Active:   genericHostEntryResponse.NewActive,
-			IP:       genericHostEntryResponse.NewIPAddress,
-			Location: s.host.ResolveLocationID(s.config.LocationID()),
+		filterMatch := false
+		if filterMac != nil {
+			filterMatch = slices.Equal(filterMac, mac)
 		}
-		devices = append(devices, device)
+		if filterMac == nil || filterMatch {
+			ipString := ggheOut.NewIPAddress
+			ip, _ := netip.ParseAddr(ipString)
+			device := &lan.LanDevice{
+				MAC:      mac,
+				Name:     ggheOut.NewHostName,
+				Active:   ggheOut.NewActive,
+				IP:       ip,
+				Location: s.host.ResolveLocationID(s.config.LocationID()),
+			}
+			devices = append(devices, device)
+		}
+		if filterMatch {
+			break
+		}
 	}
 	return devices, nil
-}
-
-func (s *fritzboxService) GetDevice(ctx context.Context, mac net.HardwareAddr) (*lan.LanDevice, error) {
-	return nil, nil
 }
 
 func (s *fritzboxService) hostsClient() *hosts.ServiceClient {
