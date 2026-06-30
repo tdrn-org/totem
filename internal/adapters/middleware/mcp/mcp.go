@@ -330,6 +330,42 @@ func registerMediaAPI(server *mcp.Server, services []media.MediaService, logger 
 		return nil, nil, fmt.Errorf("playlist '%s' not found on any service", input.PlaylistID)
 	})
 
+	// createPlaylist: try each service until created (requires at least one initial item)
+	mcp.AddTool(server, &mcp.Tool{
+		Name:        "createPlaylist",
+		Description: "Create a new playlist with the given name and at least one initial media item. Use item IDs from searchMedia results. Returns the created playlist.",
+		InputSchema: map[string]any{
+			"type": "object",
+			"properties": map[string]any{
+				"name":    map[string]any{"type": "string", "description": "The name for the new playlist."},
+				"itemIDs": map[string]any{"type": "array", "items": map[string]any{"type": "string"}, "description": "One or more media item IDs to seed the playlist (at least one required)."},
+			},
+			"required": []string{"name", "itemIDs"},
+		},
+	}, func(ctx context.Context, _ *mcp.CallToolRequest, input struct {
+		Name    string   `json:"name"`
+		ItemIDs []string `json:"itemIDs"`
+	}) (*mcp.CallToolResult, any, error) {
+		for _, ms := range services {
+			playlist, err := ms.CreatePlaylist(ctx, input.Name, input.ItemIDs)
+			if err != nil {
+				continue
+			}
+			text := fmt.Sprintf("Created playlist '%s' with %d item(s).\nDuration: %s",
+				playlist.Name, playlist.ItemCount, playlist.Duration)
+			if len(playlist.Items) > 0 {
+				text += "\n\nTracks:"
+				for i, item := range playlist.Items {
+					text += fmt.Sprintf("\n  %d. %s — %s (%s)", i+1, item.Name, item.Artists, item.Duration)
+				}
+			}
+			return &mcp.CallToolResult{
+				Content: []mcp.Content{&mcp.TextContent{Text: text}},
+			}, map[string]any{"playlist": playlist}, nil
+		}
+		return nil, nil, fmt.Errorf("failed to create playlist '%s' on any service", input.Name)
+	})
+
 	// removeFromPlaylist: try each service until found
 	mcp.AddTool(server, &mcp.Tool{
 		Name:        "removeFromPlaylist",
