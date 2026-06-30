@@ -135,7 +135,7 @@ func (s *jellyfinService) AddToPlaylist(ctx context.Context, playlistID string, 
 	if err != nil {
 		return nil, fmt.Errorf("failed request 'add to playlist' via Jellyfin (cause: %w)", err)
 	}
-	if httpResponse.StatusCode != http.StatusOK {
+	if httpResponse.StatusCode != http.StatusOK && httpResponse.StatusCode != http.StatusNoContent {
 		return nil, fmt.Errorf("failed command 'add to playlist' via Jellyfin (status: %s)", httpResponse.Status)
 	}
 	return s.GetPlaylist(ctx, playlistID)
@@ -149,7 +149,7 @@ func (s *jellyfinService) RemoveFromPlaylist(ctx context.Context, playlistID str
 	if err != nil {
 		return nil, fmt.Errorf("failed request 'remove from playlist' via Jellyfin (cause: %w)", err)
 	}
-	if httpResponse.StatusCode != http.StatusOK {
+	if httpResponse.StatusCode != http.StatusOK && httpResponse.StatusCode != http.StatusNoContent {
 		return nil, fmt.Errorf("failed command 'remove from playlist' via Jellyfin (status: %s)", httpResponse.Status)
 	}
 	return s.GetPlaylist(ctx, playlistID)
