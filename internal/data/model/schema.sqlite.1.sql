@@ -7,15 +7,12 @@ CREATE TABLE user(
     default_location_id TEXT NOT NULL,
     PRIMARY KEY(id)
 );
---
--- User
---
-CREATE TABLE device(
-    id TEXT NOT NULL,
+CREATE TABLE user_device(
     mac TEXT NOT NULL,
     name TEXT NOT NULL,
-    PRIMARY KEY(id),
-    UNIQUE(mac)
+    user_id TEXT NOT NULL,
+    PRIMARY KEY(mac),
+    FOREIGN KEY(user_id) REFERENCES user(id)
 );
 --
 -- EOF

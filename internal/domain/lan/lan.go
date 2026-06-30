@@ -34,5 +34,4 @@ type LanDevice struct {
 
 type LanService interface {
 	ListDevices(ctx context.Context) ([]*LanDevice, error)
-	GetDevice(ctx context.Context, mac net.HardwareAddr) (*LanDevice, error)
 }

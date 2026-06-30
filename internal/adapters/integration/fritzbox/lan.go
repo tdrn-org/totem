@@ -6,7 +6,6 @@ import (
 	"log/slog"
 	"net"
 	"net/netip"
-	"slices"
 
 	"github.com/tdrn-org/go-tr064"
 	"github.com/tdrn-org/go-tr064/services/tr64desc/hosts"
@@ -14,36 +13,16 @@ import (
 )
 
 func (s *fritzboxService) ListDevices(ctx context.Context) ([]*lan.LanDevice, error) {
-	return s.filterDevices(ctx, nil)
-}
-
-func (s *fritzboxService) GetDevice(ctx context.Context, mac net.HardwareAddr) (*lan.LanDevice, error) {
-	devices, err := s.filterDevices(ctx, mac)
-	if err != nil {
-		return nil, err
-	}
-	if len(devices) == 0 {
-		device := &lan.LanDevice{
-			MAC:      mac,
-			Active:   false,
-			Location: s.host.ResolveLocationID(s.config.LocationID()),
-		}
-		return device, nil
-	}
-	return devices[0], nil
-}
-
-func (s *fritzboxService) filterDevices(ctx context.Context, filterMac net.HardwareAddr) ([]*lan.LanDevice, error) {
 	serviceClient := s.hostsClient()
 	ghnoeOut := &hosts.GetHostNumberOfEntriesResponse{}
 	err := serviceClient.GetHostNumberOfEntries(ghnoeOut)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get host count from FRITZ!Box (cause: %w)", err)
 	}
-	entryCount := ghnoeOut.NewHostNumberOfEntries
-	devices := make([]*lan.LanDevice, 0, int(entryCount))
-	for entryIndex := uint16(0); entryIndex < entryCount; entryIndex++ {
-		ggheIn := &hosts.GetGenericHostEntryRequest{NewIndex: entryIndex}
+	entryCount := int(ghnoeOut.NewHostNumberOfEntries)
+	devices := make([]*lan.LanDevice, 0, entryCount)
+	for entryIndex := 0; entryIndex < entryCount; entryIndex++ {
+		ggheIn := &hosts.GetGenericHostEntryRequest{NewIndex: uint16(entryIndex)}
 		ggheOut := &hosts.GetGenericHostEntryResponse{}
 		err = serviceClient.GetGenericHostEntry(ggheIn, ggheOut)
 		if err != nil {
@@ -58,25 +37,16 @@ func (s *fritzboxService) filterDevices(ctx context.Context, filterMac net.Hardw
 			s.logger.Warn("unable to parse host hardware address; ignoring host", slog.String("mac", macString))
 			continue
 		}
-		filterMatch := false
-		if filterMac != nil {
-			filterMatch = slices.Equal(filterMac, mac)
+		ipString := ggheOut.NewIPAddress
+		ip, _ := netip.ParseAddr(ipString)
+		device := &lan.LanDevice{
+			MAC:      mac,
+			Name:     ggheOut.NewHostName,
+			Active:   ggheOut.NewActive,
+			IP:       ip,
+			Location: s.host.ResolveLocationID(s.config.LocationID()),
 		}
-		if filterMac == nil || filterMatch {
-			ipString := ggheOut.NewIPAddress
-			ip, _ := netip.ParseAddr(ipString)
-			device := &lan.LanDevice{
-				MAC:      mac,
-				Name:     ggheOut.NewHostName,
-				Active:   ggheOut.NewActive,
-				IP:       ip,
-				Location: s.host.ResolveLocationID(s.config.LocationID()),
-			}
-			devices = append(devices, device)
-		}
-		if filterMatch {
-			break
-		}
+		devices = append(devices, device)
 	}
 	return devices, nil
 }

@@ -24,6 +24,7 @@ import (
 	"github.com/tdrn-org/go-database/memory"
 	"github.com/tdrn-org/totem/internal/data"
 	"github.com/tdrn-org/totem/internal/data/model"
+	"github.com/tdrn-org/totem/internal/domain"
 )
 
 func TestUpdateScheme(t *testing.T) {
@@ -39,5 +40,14 @@ func newDataStore(t *testing.T) *data.Store {
 	require.NoError(t, err)
 	require.Equal(t, database.SchemaNone, from)
 	require.Equal(t, 1, to)
-	return data.NewStore(t.Name(), driver)
+	return data.NewStore(&dummyRuntime{}, driver, t.Name())
+}
+
+type dummyRuntime struct{}
+
+func (runtime *dummyRuntime) ResolveLocationID(locationID string) *domain.Location {
+	return &domain.Location{
+		ID:   "default",
+		Name: "Default",
+	}
 }

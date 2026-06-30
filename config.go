@@ -28,6 +28,7 @@ import (
 	"github.com/tdrn-org/go-httpserver/certificate"
 	"github.com/tdrn-org/go-log"
 	"github.com/tdrn-org/totem/config"
+	"github.com/tdrn-org/totem/internal/adapters/integration"
 	"github.com/tdrn-org/totem/internal/adapters/integration/fritzbox"
 	"github.com/tdrn-org/totem/internal/adapters/integration/huebridge"
 	"github.com/tdrn-org/totem/internal/adapters/integration/jellyfin"
@@ -103,6 +104,16 @@ func httpServerOptions(cfg *config.ServerConfig) []httpserver.OptionSetter {
 	return httpServerOptions
 }
 
+func (s *Server) registerService(service integration.Service) {
+	serviceID := service.ID()
+	s.logger.Info("registering service", slog.String("serviceID", serviceID))
+	_, exists := s.services[serviceID]
+	if exists {
+		s.logger.Info("re-registering service", slog.String("serviceID", serviceID))
+	}
+	s.services[serviceID] = service
+}
+
 var defaultLocation *domain.Location = &domain.Location{
 	Name:      "Default",
 	Latitude:  0.0,
@@ -147,7 +158,7 @@ func (s *Server) bindIntegrationServices(cfg *config.Config) {
 }
 
 func (s *Server) bindFritzboxService(cfg *config.FritzboxConfig) {
-	fritzbox.Register(s.integrationHost(), &fritzboxConfig{cfg: cfg})
+	fritzbox.Register(s.runtime(), &fritzboxConfig{cfg: cfg})
 }
 
 type fritzboxConfig struct {
@@ -163,7 +174,7 @@ func (c *fritzboxConfig) DeviceURL() *url.URL {
 }
 
 func (s *Server) bindHuebridgeService(cfg *config.HuebridgeConfig) {
-	huebridge.Register(s.integrationHost(), &huebridgeConfig{cfg: cfg})
+	huebridge.Register(s.runtime(), &huebridgeConfig{cfg: cfg})
 }
 
 type huebridgeConfig struct {
@@ -197,7 +208,7 @@ func (c *huebridgeConfig) Timeout() time.Duration {
 }
 
 func (s *Server) bindJellyfinService(cfg *config.JellyfinConfig) {
-	jellyfin.Register(s.integrationHost(), &jellyfinConfig{cfg: cfg})
+	jellyfin.Register(s.runtime(), &jellyfinConfig{cfg: cfg})
 }
 
 type jellyfinConfig struct {

@@ -37,6 +37,7 @@ import (
 	"github.com/tdrn-org/totem/internal/adapters/middleware/rest"
 	"github.com/tdrn-org/totem/internal/data"
 	"github.com/tdrn-org/totem/internal/data/model"
+	"github.com/tdrn-org/totem/internal/domain"
 )
 
 const serverJobTickerSchedule time.Duration = 5 * time.Minute
@@ -155,7 +156,7 @@ func (s *Server) startStore(ctx context.Context, cfg *config.Config) error {
 	if err != nil {
 		return errors.Join(err, driver.Close())
 	}
-	s.dataStore = data.NewStore(databaseConfig.RedactedDSN(), driver)
+	s.dataStore = data.NewStore(s.runtime(), driver, databaseConfig.RedactedDSN())
 	return nil
 }
 
@@ -229,14 +230,12 @@ func (s *Server) closeIntegrations() error {
 }
 
 func (s *Server) startRestAPI(_ context.Context, _ *config.Config) error {
-	runtime := &serverRuntime{server: s}
-	rest.NewAPI(runtime).Mount(s.httpServer)
+	rest.NewAPI(s.runtime()).Mount(s.httpServer)
 	return nil
 }
 
 func (s *Server) startMCPHandler(_ context.Context, _ *config.Config) error {
-	runtime := &serverRuntime{server: s}
-	s.httpServer.Handle("/mcp", mcp.NewHandler(runtime))
+	s.httpServer.Handle("/mcp", mcp.NewHandler(s.runtime()))
 	return nil
 }
 
@@ -267,6 +266,10 @@ func (s *Server) shutdownJobTicker(_ context.Context) error {
 	return nil
 }
 
+func (s *Server) runtime() *serverRuntime {
+	return &serverRuntime{server: s}
+}
+
 type serverRuntime struct {
 	server *Server
 }
@@ -277,6 +280,15 @@ func (runtime *serverRuntime) BaseURL() *url.URL {
 
 func (runtime *serverRuntime) Logger() *slog.Logger {
 	return runtime.server.logger
+}
+
+func (runtime *serverRuntime) RegisterService(service integration.Service) {
+	runtime.server.registerService(service)
+}
+
+func (runtime *serverRuntime) ResolveLocationID(locationID string) *domain.Location {
+	location, _ := runtime.server.resolveLocationID(locationID)
+	return location
 }
 
 func (runtime *serverRuntime) DataStore() *data.Store {

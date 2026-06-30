@@ -16,8 +16,16 @@
 
 package domain
 
+import "net"
+
 type User struct {
-	ID       string
-	Name     string
-	Location *Location
+	ID              string
+	Name            string
+	DefaultLocation *Location
+	Devices         []*UserDevice
+}
+
+type UserDevice struct {
+	MAC  net.HardwareAddr
+	Name string
 }

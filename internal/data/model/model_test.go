@@ -14,12 +14,23 @@
  * limitations under the License.
  */
 
-package domain
+package model_test
 
-import "net"
+import (
+	"testing"
 
-type Device struct {
-	ID   string
-	MAC  net.HardwareAddr
-	Name string
+	"github.com/stretchr/testify/require"
+	"github.com/tdrn-org/go-database"
+	"github.com/tdrn-org/go-database/memory"
+	"github.com/tdrn-org/totem/internal/data/model"
+)
+
+func newTestDB(t *testing.T) *database.Driver {
+	driver, err := database.Open(memory.NewConfig(model.SqliteSchemaScriptOption))
+	require.NoError(t, err)
+	from, to, err := driver.UpdateSchema(t.Context())
+	require.NoError(t, err)
+	require.Equal(t, database.SchemaNone, from)
+	require.Equal(t, 1, to)
+	return driver
 }
