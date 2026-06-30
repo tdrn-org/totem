@@ -155,12 +155,13 @@ func (s *jellyfinService) RemoveFromPlaylist(ctx context.Context, playlistID str
 	return s.GetPlaylist(ctx, playlistID)
 }
 
-func (s *jellyfinService) SearchItems(ctx context.Context, query string, mediaTypes []string, limit int) ([]*media.MediaItem, error) {
+func (s *jellyfinService) SearchItems(ctx context.Context, query string, genres []string, limit int) ([]*media.MediaItem, error) {
 	// TODO: Use mediaTypes for filtering
 	apiResponse, httpResponse, err := s.apiClient.ItemsAPI.
 		GetItems(ctx).
 		UserId(s.config.UserID()).
 		IncludeItemTypes(includeAudio).
+		Genres(genres).
 		SearchTerm(query).
 		Recursive(true).
 		Limit(int32(limit)).
