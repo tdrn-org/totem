@@ -45,9 +45,9 @@ type MediaService interface {
 	RemoveFromPlaylist(ctx context.Context, playlistID string, itemIDs []string) (*Playlist, error)
 
 	// SearchItems searches for media items matching the query.
-	// mediaTypes can filter by type (e.g. "Audio", "MusicAlbum", "MusicArtist").
-	// An empty mediaTypes slice searches all types.
-	SearchItems(ctx context.Context, query string, mediaTypes []string, limit int) ([]*MediaItem, error)
+	// genres can filter by genre (e.g. "Rock", "Pop", "Jazz").
+	// An empty genres slice applies no genre filter.
+	SearchItems(ctx context.Context, query string, genres []string, limit int) ([]*MediaItem, error)
 
 	// GetRecentlyPlayed returns recently played items for the configured user.
 	GetRecentlyPlayed(ctx context.Context, limit int) ([]*MediaItem, error)

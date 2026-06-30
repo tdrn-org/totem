@@ -409,22 +409,22 @@ func registerMediaAPI(server *mcp.Server, services []media.MediaService, logger 
 		InputSchema: map[string]any{
 			"type": "object",
 			"properties": map[string]any{
-				"query":      map[string]any{"type": "string", "description": "The search query."},
-				"mediaTypes": map[string]any{"type": "array", "items": map[string]any{"type": "string"}, "description": "Filter by media types (e.g. ['Audio', 'MusicAlbum']). Empty = all."},
-				"limit":      map[string]any{"type": "integer", "description": "Maximum number of results (default: 20)."},
+				"query":  map[string]any{"type": "string", "description": "The search query."},
+				"genres": map[string]any{"type": "array", "items": map[string]any{"type": "string"}, "description": "Filter by genres (e.g. ['Rock', 'Pop']). Empty = no filter."},
+				"limit":  map[string]any{"type": "integer", "description": "Maximum number of results (default: 20)."},
 			},
 			"required": []string{"query"},
 		},
 	}, func(ctx context.Context, _ *mcp.CallToolRequest, input struct {
-		Query      string   `json:"query"`
-		MediaTypes []string `json:"mediaTypes,omitempty"`
-		Limit      int      `json:"limit,omitempty"`
+		Query  string   `json:"query"`
+		Genres []string `json:"genres,omitempty"`
+		Limit  int      `json:"limit,omitempty"`
 	}) (*mcp.CallToolResult, any, error) {
 		if input.Limit <= 0 {
 			input.Limit = 20
 		}
 		for _, ms := range services {
-			items, err := ms.SearchItems(ctx, input.Query, input.MediaTypes, input.Limit)
+			items, err := ms.SearchItems(ctx, input.Query, input.Genres, input.Limit)
 			if err != nil {
 				continue
 			}
