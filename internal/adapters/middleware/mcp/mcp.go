@@ -215,6 +215,61 @@ func registerSmarthomeAPI(server *mcp.Server, services []smarthome.SmarthomeServ
 		}
 		return nil, nil, fmt.Errorf("sensor '%s' not found on any service", input.ID)
 	})
+
+	// listMotionSensors: aggregate across all services
+	mcp.AddTool(server, &mcp.Tool{
+		Name:        "listMotionSensors",
+		Description: "List all motion sensors known to the smart home system. Returns each sensor's ID, name, motion state (detected/clear), and location.",
+	}, func(ctx context.Context, _ *mcp.CallToolRequest, _ any) (*mcp.CallToolResult, any, error) {
+		var allMotionSensors []*smarthome.MotionSensor
+		for _, shs := range services {
+			sensors, err := shs.ListMotionSensors(ctx)
+			if err != nil {
+				logger.Warn("failed to list motion sensors from service", slog.Any("err", err))
+				continue
+			}
+			allMotionSensors = append(allMotionSensors, sensors...)
+		}
+		text := formatMotionSensorsText(allMotionSensors)
+		return &mcp.CallToolResult{
+			Content: []mcp.Content{&mcp.TextContent{Text: text}},
+		}, map[string]any{"motionSensors": allMotionSensors}, nil
+	})
+
+	// getMotion: try each service until found
+	mcp.AddTool(server, &mcp.Tool{
+		Name:        "getMotion",
+		Description: "Get motion details for a single motion sensor by its ID. Returns the sensor's name, motion state (detected/clear), and location.",
+		InputSchema: map[string]any{
+			"type": "object",
+			"properties": map[string]any{
+				"id": map[string]any{"type": "string", "description": "The motion sensor's unique identifier."},
+			},
+			"required": []string{"id"},
+		},
+	}, func(ctx context.Context, _ *mcp.CallToolRequest, input struct {
+		ID string `json:"id"`
+	}) (*mcp.CallToolResult, any, error) {
+		for _, shs := range services {
+			sensor, err := shs.GetMotion(ctx, input.ID)
+			if err != nil {
+				continue
+			}
+			motionText := "clear"
+			if sensor.Motion {
+				motionText = "detected 🏃"
+			}
+			text := fmt.Sprintf("Motion sensor '%s' (%s): motion=%s",
+				sensor.Name, sensor.ID, motionText)
+			if sensor.Location != nil {
+				text += fmt.Sprintf("\nLocation: %s (%s)", sensor.Location.Name, sensor.Location.Address)
+			}
+			return &mcp.CallToolResult{
+				Content: []mcp.Content{&mcp.TextContent{Text: text}},
+			}, map[string]any{"motionSensor": sensor}, nil
+		}
+		return nil, nil, fmt.Errorf("motion sensor '%s' not found on any service", input.ID)
+	})
 }
 
 func registerMediaTools(server *mcp.Server, runtime Runtime) {
@@ -563,6 +618,25 @@ func formatSensorsText(sensors []*smarthome.Sensor) string {
 			battery = fmt.Sprintf(" 🔋%d%%", s.BatteryLevel)
 		}
 		result += fmt.Sprintf("  %-30s %-12s %5.1f°C%s\n", s.Name, s.Type, s.Temperature, battery)
+	}
+	return result
+}
+
+func formatMotionSensorsText(sensors []*smarthome.MotionSensor) string {
+	if len(sensors) == 0 {
+		return "No motion sensors found."
+	}
+	result := fmt.Sprintf("%d motion sensors:\n", len(sensors))
+	for _, s := range sensors {
+		motionText := "clear"
+		if s.Motion {
+			motionText = "detected 🏃"
+		}
+		locName := "Unknown"
+		if s.Location != nil && s.Location.Name != "" {
+			locName = s.Location.Name
+		}
+		result += fmt.Sprintf("  %-30s %-10s %s\n", s.Name, motionText, locName)
 	}
 	return result
 }
