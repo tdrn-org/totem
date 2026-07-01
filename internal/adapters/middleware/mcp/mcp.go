@@ -405,7 +405,7 @@ func registerMediaAPI(server *mcp.Server, services []media.MediaService, logger 
 	// searchMedia: try each service until results found
 	mcp.AddTool(server, &mcp.Tool{
 		Name:        "searchMedia",
-		Description: "Search for media items (songs, albums, artists) across media servers. Specify types like 'Audio', 'MusicAlbum', 'MusicArtist', or leave empty to search all.",
+		Description: "Search for media items (songs, albums, artists) across media servers. Specify genres like 'Rock', 'Pop', 'Alternative', or leave empty to search all.",
 		InputSchema: map[string]any{
 			"type": "object",
 			"properties": map[string]any{
