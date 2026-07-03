@@ -14,20 +14,14 @@
  * limitations under the License.
  */
 
-package totem
+package application
 
 import (
-	"context"
+	"github.com/tdrn-org/totem/internal/adapters/integration"
+	"github.com/tdrn-org/totem/internal/data"
 )
 
-func (s *Server) runJobs() {
-	s.logger.Info("running jobs...")
-	ctx := context.Background()
-	for _, job := range s.jobs {
-		job.Run(ctx)
-	}
-}
-
-type jobRunner interface {
-	Run(ctx context.Context)
+type Host interface {
+	DataStore() *data.Store
+	Services() map[string]integration.Service
 }

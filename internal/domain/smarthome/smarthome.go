@@ -50,6 +50,7 @@ type MotionSensor struct {
 
 // SmarthomeService defines the operations for smart-home lighting and sensors.
 type SmarthomeService interface {
+	Location() *domain.Location
 	ListLights(ctx context.Context) ([]*Light, error)
 	GetLight(ctx context.Context, id string) (*Light, error)
 	SetLight(ctx context.Context, id string, on *bool, brightness *uint8) (*Light, error)

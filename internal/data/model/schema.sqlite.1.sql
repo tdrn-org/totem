@@ -16,5 +16,18 @@ CREATE TABLE user_device(
     FOREIGN KEY(user_id) REFERENCES user(id)
 );
 --
+-- Log
+--
+CREATE TABLE presence_log(
+    user_id TEXT NOT NULL,
+    location_id TEXT NOT NULL,
+    active INTEGER NOT NULL,
+    ip TEXT,
+    name TEXT,
+    timestamp INTEGER NOT NULL,
+    PRIMARY KEY(user_id,location_id,active),
+    FOREIGN KEY(user_id) REFERENCES user(id)
+);
+--
 -- EOF
 --

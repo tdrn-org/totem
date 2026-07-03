@@ -31,3 +31,7 @@ type Location struct {
 	// Longitude is the geographic longitude of this location.
 	Longitude float64
 }
+
+func (l *Location) Equal(other *Location) bool {
+	return l.ID == other.ID
+}

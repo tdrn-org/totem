@@ -64,12 +64,7 @@ func (u *User) insert(ctx context.Context) error {
 	}
 	defer tx.RollbackUncommitedTx(txCtx)
 
-	args0 := []any{
-		u.ID,
-		u.Name,
-		u.DefaultLocationID,
-	}
-	err = tx.ExecTx(txCtx, insertUserSQL, args0...)
+	err = tx.ExecTx(txCtx, insertUserSQL, u.ID, u.Name, u.DefaultLocationID)
 	if err != nil {
 		return err
 	}
@@ -196,6 +191,46 @@ func (u *User) RemoveDevice(ctx context.Context, mac net.HardwareAddr) error {
 	}
 	u.Devices = u.Devices[:n]
 	return nil
+}
+
+//go:embed user.select.sql
+var selectUserByIDSQL string
+
+// SelectUsers load all stored users.
+func SelectUserByID(ctx context.Context, driver *database.Driver, userID string) (*User, error) {
+	txCtx, tx, err := driver.BeginTx(ctx)
+	if err != nil {
+		return nil, err
+	}
+	defer tx.RollbackUncommitedTx(txCtx)
+
+	userRows, err := tx.QueryTx(txCtx, selectUserByIDSQL, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer userRows.Close()
+	var user *User
+	if userRows.Next() {
+		user = &User{
+			driver: driver,
+		}
+		err = database.Scan(userRows, user)
+		if err != nil {
+			return nil, err
+		}
+		userDevices, err := user.selectUserDevices(txCtx, tx)
+		if err != nil {
+			return nil, err
+		}
+		user.Devices = userDevices
+	}
+
+	err = tx.CommitTx(txCtx)
+	if err != nil {
+		return nil, err
+	}
+
+	return user, nil
 }
 
 //go:embed user.select.sql

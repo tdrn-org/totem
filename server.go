@@ -35,6 +35,7 @@ import (
 	"github.com/tdrn-org/totem/internal/adapters/integration"
 	"github.com/tdrn-org/totem/internal/adapters/middleware/mcp"
 	"github.com/tdrn-org/totem/internal/adapters/middleware/rest"
+	"github.com/tdrn-org/totem/internal/application"
 	"github.com/tdrn-org/totem/internal/data"
 	"github.com/tdrn-org/totem/internal/data/model"
 	"github.com/tdrn-org/totem/internal/domain"
@@ -48,10 +49,11 @@ type Server struct {
 	httpServer          *httpserver.Instance
 	baseURL             *url.URL
 	services            map[string]integration.Service
+	presenceTracker     *application.PresenceTracker
 	jobTicker           *time.Ticker
 	jobTickerShutdown   chan any
 	jobTickerShutdownWG sync.WaitGroup
-	jobs                []jobRunner
+	jobs                []jobFunc
 	logger              *slog.Logger
 }
 
@@ -68,6 +70,7 @@ func StartServer(ctx context.Context, cfg *config.Config) (*Server, error) {
 		s.startStore,
 		s.startHttpServer,
 		s.startIntegrations,
+		s.startApplications,
 		s.startRestAPI,
 		s.startMCPHandler,
 		s.startJobTicker,
@@ -229,6 +232,11 @@ func (s *Server) closeIntegrations() error {
 	return errors.Join(closeErrs...)
 }
 
+func (s *Server) startApplications(_ context.Context, _ *config.Config) error {
+	s.presenceTracker = application.NewPresenceTracker(s.runtime())
+	return nil
+}
+
 func (s *Server) startRestAPI(_ context.Context, _ *config.Config) error {
 	rest.NewAPI(s.runtime()).Mount(s.httpServer)
 	return nil
@@ -242,6 +250,9 @@ func (s *Server) startMCPHandler(_ context.Context, _ *config.Config) error {
 func (s *Server) startJobTicker(_ context.Context, cfg *config.Config) error {
 	schedule := serverJobTickerSchedule
 	s.logger.Info("starting job ticker...", slog.String("schedule", schedule.String()))
+	s.jobs = []jobFunc{
+		s.presenceTracker.Track,
+	}
 	s.jobTicker = time.NewTicker(schedule)
 	s.jobTickerShutdown = make(chan any)
 	s.jobTickerShutdownWG.Go(func() {
@@ -265,6 +276,16 @@ func (s *Server) shutdownJobTicker(_ context.Context) error {
 	s.jobTickerShutdownWG.Wait()
 	return nil
 }
+
+func (s *Server) runJobs() {
+	s.logger.Info("running jobs...")
+	ctx := context.Background()
+	for _, job := range s.jobs {
+		job(ctx)
+	}
+}
+
+type jobFunc func(ctx context.Context)
 
 func (s *Server) runtime() *serverRuntime {
 	return &serverRuntime{server: s}
@@ -297,6 +318,10 @@ func (runtime *serverRuntime) DataStore() *data.Store {
 
 func (runtime *serverRuntime) Services() map[string]integration.Service {
 	return runtime.server.services
+}
+
+func (runtime *serverRuntime) PresenceTracker() *application.PresenceTracker {
+	return runtime.server.presenceTracker
 }
 
 func (runtime *serverRuntime) Ping(ctx context.Context) error {

@@ -25,6 +25,7 @@ import (
 
 	"github.com/tdrn-org/go-hue"
 	"github.com/tdrn-org/totem/internal/adapters/integration"
+	"github.com/tdrn-org/totem/internal/domain"
 )
 
 const Name = "huebridge"
@@ -88,6 +89,10 @@ func (s *huebridgeService) Shutdown(ctx context.Context) error {
 
 func (s *huebridgeService) Close() error {
 	return nil
+}
+
+func (s *huebridgeService) Location() *domain.Location {
+	return s.host.ResolveLocationID(s.config.LocationID())
 }
 
 func (s *huebridgeService) resolveBridgeClient() (hue.BridgeClient, error) {

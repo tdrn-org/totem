@@ -33,5 +33,6 @@ type LanDevice struct {
 }
 
 type LanService interface {
+	Location() *domain.Location
 	ListDevices(ctx context.Context) ([]*LanDevice, error)
 }

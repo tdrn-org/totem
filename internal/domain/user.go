@@ -25,6 +25,10 @@ type User struct {
 	Devices         []*UserDevice
 }
 
+func (u *User) Equal(other *User) bool {
+	return u.ID == other.ID
+}
+
 type UserDevice struct {
 	MAC  net.HardwareAddr
 	Name string

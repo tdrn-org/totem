@@ -23,6 +23,7 @@ import (
 
 	"github.com/tdrn-org/go-tr064"
 	"github.com/tdrn-org/totem/internal/adapters/integration"
+	"github.com/tdrn-org/totem/internal/domain"
 )
 
 const Name = "fritzbox"
@@ -72,4 +73,8 @@ func (s *fritzboxService) Shutdown(ctx context.Context) error {
 
 func (s *fritzboxService) Close() error {
 	return nil
+}
+
+func (s *fritzboxService) Location() *domain.Location {
+	return s.host.ResolveLocationID(s.config.LocationID())
 }
