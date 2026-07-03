@@ -45,6 +45,7 @@ func TestUser(t *testing.T) {
 	// Add user device
 	device1MAC, _ := net.ParseMAC("01:02:03:04:05:06")
 	_, err = store.AddUserDevice(t.Context(), user1, device1MAC, "device1")
+	require.NoError(t, err)
 
 	// Update user
 	err = store.UpdateUser(t.Context(), user1)
