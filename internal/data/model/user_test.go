@@ -28,13 +28,29 @@ func TestUser(t *testing.T) {
 	driver := newTestDB(t)
 	defer driver.Close()
 
-	user1 := model.NewUser(driver, "user1", "default")
-	err := user1.Insert(t.Context())
+	// Add user
+	user1, err := model.AddUser(t.Context(), driver, "user1", "default")
 	require.NoError(t, err)
 
+	// Add user device
 	device1MAC, _ := net.ParseMAC("01:02:03:04:05:06")
 	device1, err := user1.AddDevice(t.Context(), device1MAC, "Device1")
 	require.NoError(t, err)
-
 	require.Equal(t, device1MAC.String(), device1.MAC)
+
+	// Select all users (1)
+	users, err := model.SelectUsers(t.Context(), driver)
+	require.NoError(t, err)
+	require.Len(t, users, 1)
+	user2 := users[0]
+	require.Equal(t, user1, user2)
+
+	// Delete user
+	err = user2.Delete(t.Context())
+	require.NoError(t, err)
+
+	// Select all users (0)
+	users, err = model.SelectUsers(t.Context(), driver)
+	require.NoError(t, err)
+	require.Len(t, users, 0)
 }

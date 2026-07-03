@@ -17,6 +17,7 @@
 package data_test
 
 import (
+	"net"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -33,6 +34,27 @@ func TestUpdateScheme(t *testing.T) {
 	require.NoError(t, err)
 }
 
+func TestUser(t *testing.T) {
+	store := newDataStore(t)
+	defer store.Close()
+
+	// Add user
+	user1, err := store.AddUser(t.Context(), "user1", dummyLocation)
+	require.NoError(t, err)
+
+	// Add user device
+	device1MAC, _ := net.ParseMAC("01:02:03:04:05:06")
+	_, err = store.AddUserDevice(t.Context(), user1, device1MAC, "device1")
+
+	// Update user
+	err = store.UpdateUser(t.Context(), user1)
+	require.NoError(t, err)
+
+	// Delete user
+	err = store.DeleteUser(t.Context(), user1)
+	require.NoError(t, err)
+}
+
 func newDataStore(t *testing.T) *data.Store {
 	driver, err := database.Open(memory.NewConfig(model.SqliteSchemaScriptOption))
 	require.NoError(t, err)
@@ -43,11 +65,13 @@ func newDataStore(t *testing.T) *data.Store {
 	return data.NewStore(&dummyRuntime{}, driver, t.Name())
 }
 
+var dummyLocation *domain.Location = &domain.Location{
+	ID:   "default",
+	Name: "Default",
+}
+
 type dummyRuntime struct{}
 
 func (runtime *dummyRuntime) ResolveLocationID(locationID string) *domain.Location {
-	return &domain.Location{
-		ID:   "default",
-		Name: "Default",
-	}
+	return dummyLocation
 }
