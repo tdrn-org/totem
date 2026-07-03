@@ -117,9 +117,14 @@ func (t *PresenceTracker) CheckLocation(ctx context.Context, location *domain.Lo
 			if nature == integration.NatureSmarthome {
 				smarthomeService := service.(smarthome.SmarthomeService)
 				if smarthomeService.Location().Equal(location) {
-					motionSensors, err = smarthomeService.ListMotionSensors(ctx)
+					allSensors, err := smarthomeService.ListMotionSensors(ctx)
 					if err != nil {
 						return nil, err
+					}
+					for _, sensor := range allSensors {
+						if sensor.Motion {
+							motionSensors = append(motionSensors, sensor)
+						}
 					}
 				}
 			}

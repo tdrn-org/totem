@@ -48,7 +48,7 @@ func (s *Store) ListUserPresenceLogs(ctx context.Context, user *domain.User, las
 		return nil, err
 	}
 	locationMap := make(map[string]string, len(storeLogs))
-	logs := make([]*UserPresenceLog, len(storeLogs))
+	logs := make([]*UserPresenceLog, 0, len(storeLogs))
 	for _, storeLog := range storeLogs {
 		if lastOnly {
 			_, exists := locationMap[storeLog.LocationID]
@@ -68,7 +68,7 @@ func (s *Store) ListLocationPresenceLogs(ctx context.Context, location *domain.L
 		return nil, err
 	}
 	userMap := make(map[string]string, len(storeLogs))
-	logs := make([]*UserPresenceLog, len(storeLogs))
+	logs := make([]*UserPresenceLog, 0, len(storeLogs))
 	for _, storeLog := range storeLogs {
 		_, exists := userMap[storeLog.UserID]
 		if exists {
