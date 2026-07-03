@@ -64,7 +64,7 @@ func (s *fritzboxService) ID() string {
 }
 
 func (s *fritzboxService) Natures() []integration.Nature {
-	return []integration.Nature{}
+	return []integration.Nature{integration.NatureLan}
 }
 
 func (s *fritzboxService) Shutdown(ctx context.Context) error {

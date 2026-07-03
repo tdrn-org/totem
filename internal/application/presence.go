@@ -53,6 +53,7 @@ func (t *PresenceTracker) Track(ctx context.Context) {
 }
 
 func (t *PresenceTracker) trackLanService(ctx context.Context, serviceID string, service lan.LanService) {
+	t.logger.Debug("probing Lan devices", slog.String("serviceID", serviceID))
 	lanDevices, err := service.ListDevices(ctx)
 	if err != nil {
 		t.logger.Warn("failed to list Lan devices", slog.String("service", serviceID), slog.Any("err", err))
