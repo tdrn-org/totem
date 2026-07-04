@@ -53,7 +53,7 @@ endif
 	$(GO) mod download -x
 
 .PHONY: build
-build: deps
+build: fmt deps
 	@echo "Building artifacts..."
 ifeq (1, $(WEB))
 	# cd internal/web && $(NPM) $(NPMOPTS) run build
@@ -74,7 +74,7 @@ testdeps: build
 	$(GO) install honnef.co/go/tools/cmd/staticcheck@latest
 
 .PHONY: check
-check: testdeps vet
+check: fmt testdeps vet
 	@echo "Testing artifacts..."
 ifeq (1, $(WEB))
 	# $(NPM) $(NPMOPTS) run --prefix internal/server/web test
