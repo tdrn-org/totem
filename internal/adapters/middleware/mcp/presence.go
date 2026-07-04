@@ -89,14 +89,18 @@ func registerPresenceTools(server *mcp.Server, runtime Runtime) {
 }
 
 func formatUserPresenceText(user *domain.User, p *presence.UserPresence) string {
+	lastSeen := "unknown"
+	if !p.LastSeen.IsZero() {
+		lastSeen = p.LastSeen.Format("2006-01-02 15:04:05")
+	}
 	if p.Location != nil {
 		return fmt.Sprintf("User '%s' is at '%s' (%s).\nLast seen: %s at '%s'.",
 			user.Name, p.Location.Name, p.Location.Address,
-			p.LastSeen.Format("2006-01-02 15:04:05"), p.Location.Name)
+			lastSeen, p.Location.Name)
 	}
 	if p.LastSeenLocation != nil {
 		return fmt.Sprintf("User '%s' is not currently present at any known location.\nLast seen: %s at '%s' (%s).",
-			user.Name, p.LastSeen.Format("2006-01-02 15:04:05"),
+			user.Name, lastSeen,
 			p.LastSeenLocation.Name, p.LastSeenLocation.Address)
 	}
 	return fmt.Sprintf("User '%s' has never been seen at any known location.", user.Name)
