@@ -100,40 +100,37 @@ func (s *huebridgeService) SetLight(ctx context.Context, id string, on *bool, br
 	return s.GetLight(ctx, id)
 }
 
-func (s *huebridgeService) ListSensors(ctx context.Context) ([]*smarthome.Sensor, error) {
+func (s *huebridgeService) ListTemperatureSensors(ctx context.Context) ([]*smarthome.TemperatureSensor, error) {
 	bridgeClient, err := s.resolveBridgeClient()
 	if err != nil {
 		return nil, err
 	}
 	location := s.host.ResolveLocationID(s.config.LocationID())
 	deviceNames := s.resolveDeviceNames(ctx, bridgeClient)
-	batteryLevels := s.resolveBatteryLevels(ctx, bridgeClient)
 	response, err := bridgeClient.GetTemperatures(ctx)
 	if err != nil {
 		s.taintBridgeClient()
 		return nil, fmt.Errorf("failed to get temperatures from Hue Bridge (cause: %w)", err)
 	}
-	sensors := make([]*smarthome.Sensor, 0, len(response.JSON200.Data))
+	sensors := make([]*smarthome.TemperatureSensor, 0, len(response.JSON200.Data))
 	for _, t := range response.JSON200.Data {
 		temp := float64(t.Temperature.Temperature)
 		if t.Temperature.TemperatureReport != nil && t.Temperature.TemperatureReport.Temperature != nil {
 			temp = float64(*t.Temperature.TemperatureReport.Temperature)
 		}
-		battery := batteryLevels[t.Owner.Rid]
-		sensor := &smarthome.Sensor{
-			ID:           t.Id,
-			Name:         deviceName(deviceNames, t.Owner.Rid, t.Id),
-			Type:         "temperature",
-			Temperature:  temp,
-			BatteryLevel: battery,
-			Location:     location,
+		sensor := &smarthome.TemperatureSensor{
+			ID:          t.Id,
+			Name:        deviceName(deviceNames, t.Owner.Rid, t.Id),
+			Type:        "temperature",
+			Temperature: temp,
+			Location:    location,
 		}
 		sensors = append(sensors, sensor)
 	}
 	return sensors, nil
 }
 
-func (s *huebridgeService) GetSensor(ctx context.Context, id string) (*smarthome.Sensor, error) {
+func (s *huebridgeService) GetTemperatureSensor(ctx context.Context, id string) (*smarthome.TemperatureSensor, error) {
 	bridgeClient, err := s.resolveBridgeClient()
 	if err != nil {
 		return nil, err
@@ -148,18 +145,73 @@ func (s *huebridgeService) GetSensor(ctx context.Context, id string) (*smarthome
 		return nil, fmt.Errorf("no temperature data from Hue Bridge")
 	}
 	deviceNames := s.resolveDeviceNames(ctx, bridgeClient)
-	batteryLevels := s.resolveBatteryLevels(ctx, bridgeClient)
 	t := response.JSON200.Data[0]
 	temp := float64(t.Temperature.Temperature)
 	if t.Temperature.TemperatureReport != nil && t.Temperature.TemperatureReport.Temperature != nil {
 		temp = float64(*t.Temperature.TemperatureReport.Temperature)
 	}
-	return &smarthome.Sensor{
-		ID:           t.Id,
-		Name:         deviceName(deviceNames, t.Owner.Rid, t.Id),
-		Type:         "temperature",
-		Temperature:  temp,
-		BatteryLevel: batteryLevels[t.Owner.Rid],
+	return &smarthome.TemperatureSensor{
+		ID:          t.Id,
+		Name:        deviceName(deviceNames, t.Owner.Rid, t.Id),
+		Type:        "temperature",
+		Temperature: temp,
+		Location:    location,
+	}, nil
+}
+
+func (s *huebridgeService) ListBatteryDevices(ctx context.Context) ([]*smarthome.BatteryDevice, error) {
+	bridgeClient, err := s.resolveBridgeClient()
+	if err != nil {
+		return nil, err
+	}
+	location := s.host.ResolveLocationID(s.config.LocationID())
+	deviceNames := s.resolveDeviceNames(ctx, bridgeClient)
+	response, err := bridgeClient.GetDevicePowers(ctx)
+	if err != nil {
+		s.taintBridgeClient()
+		return nil, fmt.Errorf("failed to get device powers from Hue Bridge (cause: %w)", err)
+	}
+	devices := make([]*smarthome.BatteryDevice, 0, len(response.JSON200.Data))
+	for _, dp := range response.JSON200.Data {
+		if dp.PowerState.BatteryLevel == nil {
+			continue
+		}
+		device := &smarthome.BatteryDevice{
+			ID:           dp.Owner.Rid,
+			Name:         deviceName(deviceNames, dp.Owner.Rid, dp.Owner.Rid),
+			Type:         "battery",
+			BatteryLevel: *dp.PowerState.BatteryLevel,
+			Location:     location,
+		}
+		devices = append(devices, device)
+	}
+	return devices, nil
+}
+
+func (s *huebridgeService) GetBatteryDevice(ctx context.Context, id string) (*smarthome.BatteryDevice, error) {
+	bridgeClient, err := s.resolveBridgeClient()
+	if err != nil {
+		return nil, err
+	}
+	location := s.host.ResolveLocationID(s.config.LocationID())
+	deviceNames := s.resolveDeviceNames(ctx, bridgeClient)
+	response, err := bridgeClient.GetDevicePower(ctx, id)
+	if err != nil {
+		s.taintBridgeClient()
+		return nil, fmt.Errorf("failed to get device power from Hue Bridge (cause: %w)", err)
+	}
+	if len(response.JSON200.Data) == 0 {
+		return nil, fmt.Errorf("no device power data from Hue Bridge")
+	}
+	dp := response.JSON200.Data[0]
+	if dp.PowerState.BatteryLevel == nil {
+		return nil, fmt.Errorf("device '%s' is not battery-powered", id)
+	}
+	return &smarthome.BatteryDevice{
+		ID:           dp.Owner.Rid,
+		Name:         deviceName(deviceNames, dp.Owner.Rid, dp.Owner.Rid),
+		Type:         "battery",
+		BatteryLevel: *dp.PowerState.BatteryLevel,
 		Location:     location,
 	}, nil
 }
@@ -223,20 +275,6 @@ func (s *huebridgeService) resolveDeviceNames(ctx context.Context, client hue.Br
 		names[d.Id] = d.Metadata.Name
 	}
 	return names
-}
-
-func (s *huebridgeService) resolveBatteryLevels(ctx context.Context, client hue.BridgeClient) map[string]int {
-	levels := make(map[string]int)
-	response, err := client.GetDevicePowers(ctx)
-	if err != nil {
-		return levels
-	}
-	for _, dp := range response.JSON200.Data {
-		if dp.PowerState.BatteryLevel != nil {
-			levels[dp.Owner.Rid] = *dp.PowerState.BatteryLevel
-		}
-	}
-	return levels
 }
 
 func deviceName(names map[string]string, ownerRID, fallback string) string {

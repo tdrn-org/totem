@@ -31,20 +31,29 @@ type Light struct {
 	Location   *domain.Location
 }
 
-// Sensor represents a smart-home sensor (temperature, motion, etc.).
-type Sensor struct {
+// TemperatureSensor represents a sensor that measures temperature.
+type TemperatureSensor struct {
+	ID          string
+	Name        string
+	Type        string
+	Temperature float64
+	Location    *domain.Location
+}
+
+// BatteryDevice represents a battery-powered device with a charge level.
+type BatteryDevice struct {
 	ID           string
 	Name         string
 	Type         string
-	Temperature  float64
-	BatteryLevel int // Battery percentage 0-100, or -1 if not battery-powered
+	BatteryLevel int // Battery percentage 0-100
 	Location     *domain.Location
 }
 
+// MotionSensor represents a motion detector.
 type MotionSensor struct {
 	ID       string
 	Name     string
-	Motion   bool // Bewegung erkannt? Ja/Nein
+	Motion   bool
 	Location *domain.Location
 }
 
@@ -54,8 +63,10 @@ type SmarthomeService interface {
 	ListLights(ctx context.Context) ([]*Light, error)
 	GetLight(ctx context.Context, id string) (*Light, error)
 	SetLight(ctx context.Context, id string, on *bool, brightness *uint8) (*Light, error)
-	ListSensors(ctx context.Context) ([]*Sensor, error)
-	GetSensor(ctx context.Context, id string) (*Sensor, error)
+	ListTemperatureSensors(ctx context.Context) ([]*TemperatureSensor, error)
+	GetTemperatureSensor(ctx context.Context, id string) (*TemperatureSensor, error)
+	ListBatteryDevices(ctx context.Context) ([]*BatteryDevice, error)
+	GetBatteryDevice(ctx context.Context, id string) (*BatteryDevice, error)
 	ListMotionSensors(ctx context.Context) ([]*MotionSensor, error)
 	GetMotion(ctx context.Context, id string) (*MotionSensor, error)
 }

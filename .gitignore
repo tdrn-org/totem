@@ -38,3 +38,4 @@ build/
 *-local.toml
 totem.toml
 pim-mcp
+totem.db
