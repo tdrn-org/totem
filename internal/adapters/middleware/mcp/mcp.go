@@ -17,6 +17,7 @@
 package mcp
 
 import (
+	"context"
 	"log/slog"
 	"net/http"
 	"net/url"
@@ -71,6 +72,17 @@ func NewHandler(runtime Runtime) http.Handler {
 		Logger: runtime.Logger(),
 	}
 	server := mcp.NewServer(impl, options)
+
+	// Log tool failures in a generic manner
+	server.AddReceivingMiddleware(func(next mcp.MethodHandler) mcp.MethodHandler {
+		return func(ctx context.Context, method string, req mcp.Request) (mcp.Result, error) {
+			result, err := next(ctx, method, req)
+			if err != nil {
+				runtime.Logger().Warn("mcp tool call failure", slog.String("method", method), slog.Any("err", err))
+			}
+			return result, err
+		}
+	})
 
 	// Register tools from services based on their natures
 	registerSmarthomeTools(server, runtime)
