@@ -21,6 +21,7 @@ import (
 	"net/netip"
 	"time"
 
+	"github.com/tdrn-org/go-database"
 	"github.com/tdrn-org/totem/internal/data/model"
 	"github.com/tdrn-org/totem/internal/domain"
 )
@@ -95,7 +96,7 @@ func (s *Store) model2UserPresenceLog(user *domain.User, storeLog *model.Presenc
 		Active:    storeLog.Active,
 		IP:        ip,
 		Name:      storeLog.Name,
-		Timestamp: time.Unix(storeLog.Timestamp, 0),
+		Timestamp: database.DB2Time(storeLog.Timestamp),
 	}
 	return log
 }
