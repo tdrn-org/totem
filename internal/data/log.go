@@ -90,11 +90,12 @@ func (s *Store) model2UserPresenceLog(user *domain.User, storeLog *model.Presenc
 		ip, _ = netip.ParseAddr(storeLog.IP)
 	}
 	log := &UserPresenceLog{
-		User:     user,
-		Location: s.runtime.ResolveLocationID(storeLog.LocationID),
-		Active:   storeLog.Active,
-		IP:       ip,
-		Name:     storeLog.Name,
+		User:      user,
+		Location:  s.runtime.ResolveLocationID(storeLog.LocationID),
+		Active:    storeLog.Active,
+		IP:        ip,
+		Name:      storeLog.Name,
+		Timestamp: time.Unix(storeLog.Timestamp, 0),
 	}
 	return log
 }

@@ -31,10 +31,10 @@ func registerPresenceTools(server *mcp.Server, runtime Runtime) {
 		return
 	}
 
-	// checkUser: find a user's current location
+	// checkUser: find a user's current and last known location
 	mcp.AddTool(server, &mcp.Tool{
 		Name:        "checkUser",
-		Description: "Determine the current location of a user by checking whether any of their registered devices are active on a known LAN. Returns the location if found, or an empty result if the user cannot be located.",
+		Description: "Determine the current location of a user by checking whether any of their registered devices are active on a known LAN. Returns the location if found, along with the last seen location and timestamp.",
 		InputSchema: map[string]any{
 			"type": "object",
 			"properties": map[string]any{
@@ -52,20 +52,14 @@ func registerPresenceTools(server *mcp.Server, runtime Runtime) {
 		if user == nil {
 			return nil, nil, fmt.Errorf("user '%s' not found", input.UserID)
 		}
-		location, err := presenceTracker.CheckUser(ctx, user)
+		presence, err := presenceTracker.CheckUser(ctx, user)
 		if err != nil {
 			return nil, nil, fmt.Errorf("failed to check user presence: %w", err)
 		}
-		if location == nil {
-			text := fmt.Sprintf("User '%s' is not currently present at any known location.", user.Name)
-			return &mcp.CallToolResult{
-				Content: []mcp.Content{&mcp.TextContent{Text: text}},
-			}, map[string]any{"user": user, "location": nil}, nil
-		}
-		text := fmt.Sprintf("User '%s' is at '%s' (%s).", user.Name, location.Name, location.Address)
+		text := formatUserPresenceText(user, presence)
 		return &mcp.CallToolResult{
 			Content: []mcp.Content{&mcp.TextContent{Text: text}},
-		}, map[string]any{"user": user, "location": location}, nil
+		}, map[string]any{"user": user, "presence": presence}, nil
 	})
 
 	// checkLocation: list users and triggered motion sensors at a location
@@ -92,6 +86,20 @@ func registerPresenceTools(server *mcp.Server, runtime Runtime) {
 			Content: []mcp.Content{&mcp.TextContent{Text: text}},
 		}, map[string]any{"presenceResult": result}, nil
 	})
+}
+
+func formatUserPresenceText(user *domain.User, p *presence.UserPresence) string {
+	if p.Location != nil {
+		return fmt.Sprintf("User '%s' is at '%s' (%s).\nLast seen: %s at '%s'.",
+			user.Name, p.Location.Name, p.Location.Address,
+			p.LastSeen.Format("2006-01-02 15:04:05"), p.Location.Name)
+	}
+	if p.LastSeenLocation != nil {
+		return fmt.Sprintf("User '%s' is not currently present at any known location.\nLast seen: %s at '%s' (%s).",
+			user.Name, p.LastSeen.Format("2006-01-02 15:04:05"),
+			p.LastSeenLocation.Name, p.LastSeenLocation.Address)
+	}
+	return fmt.Sprintf("User '%s' has never been seen at any known location.", user.Name)
 }
 
 func formatPresenceResultText(location *domain.Location, result *presence.PresenceResult) string {

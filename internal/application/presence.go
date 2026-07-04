@@ -87,17 +87,22 @@ func (t *PresenceTracker) matchUserDevice(userDevice *domain.UserDevice, lanDevi
 	return nil
 }
 
-func (t *PresenceTracker) CheckUser(ctx context.Context, user *domain.User) (*domain.Location, error) {
-	logs, err := t.host.DataStore().ListUserPresenceLogs(ctx, user, true)
+func (t *PresenceTracker) CheckUser(ctx context.Context, user *domain.User) (*presence.UserPresence, error) {
+	logs, err := t.host.DataStore().ListUserPresenceLogs(ctx, user, false)
 	if err != nil {
 		return nil, err
 	}
+	result := &presence.UserPresence{}
 	for _, log := range logs {
-		if log.Active {
-			return log.Location, nil
+		if result.LastSeenLocation == nil {
+			result.LastSeenLocation = log.Location
+			result.LastSeen = log.Timestamp
+		}
+		if log.Active && result.Location == nil {
+			result.Location = log.Location
 		}
 	}
-	return nil, nil
+	return result, nil
 }
 
 func (t *PresenceTracker) CheckLocation(ctx context.Context, location *domain.Location) (*presence.PresenceResult, error) {
