@@ -30,8 +30,8 @@ type UserPresence struct {
 	Location *domain.Location
 	// LastSeenLocation is the last known location of the user, regardless of current presence.
 	LastSeenLocation *domain.Location
-	// LastSeen is the timestamp of the most recent presence log entry.
-	LastSeen time.Time
+	// LastSeen is the timestamp of the most recent presence log entry, or nil if never seen.
+	LastSeen *time.Time
 }
 
 // PresenceResult describes the current presence situation at a location.

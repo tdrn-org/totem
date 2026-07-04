@@ -90,7 +90,7 @@ func registerPresenceTools(server *mcp.Server, runtime Runtime) {
 
 func formatUserPresenceText(user *domain.User, p *presence.UserPresence) string {
 	lastSeen := "unknown"
-	if !p.LastSeen.IsZero() {
+	if p.LastSeen != nil && !p.LastSeen.IsZero() {
 		lastSeen = p.LastSeen.Format("2006-01-02 15:04:05")
 	}
 	if p.Location != nil {

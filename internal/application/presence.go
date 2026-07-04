@@ -96,7 +96,8 @@ func (t *PresenceTracker) CheckUser(ctx context.Context, user *domain.User) (*pr
 	for _, log := range logs {
 		if result.LastSeenLocation == nil {
 			result.LastSeenLocation = log.Location
-			result.LastSeen = log.Timestamp
+			t := log.Timestamp
+			result.LastSeen = &t
 		}
 		if log.Active && result.Location == nil {
 			result.Location = log.Location
