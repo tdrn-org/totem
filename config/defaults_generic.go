@@ -19,5 +19,5 @@
 package config
 
 func DefaultPath() string {
-	return "/etc/tomem/totem.toml"
+	return "/etc/totem/totem.toml"
 }
