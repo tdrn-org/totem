@@ -97,24 +97,39 @@ func (t *PresenceTracker) CheckUser(ctx context.Context, user *domain.User) (*pr
 		return result, nil
 	}
 
-	// Overall newest entry for LastSeen fallback
-	result.LastSeenLocation = logs[0].Location
-	if !logs[0].Timestamp.IsZero() {
-		t := logs[0].Timestamp
-		result.LastSeen = &t
-	}
-
-	// Per location: first occurrence is the newest for that location
+	// Per location: first occurrence is the newest for that location.
+	// Also track the most recent active=1 entry for LastSeen.
 	seenLocations := make(map[string]bool)
 	for _, log := range logs {
 		locID := log.Location.ID
+		// Per-location current presence
 		if seenLocations[locID] {
-			continue // Already saw this location's newest entry
+			continue
 		}
 		seenLocations[locID] = true
 		if log.Active {
+			// First active=1 overall is also the newest (DESC order).
+			// User can only be at one location at a time.
 			result.Location = log.Location
+			result.LastSeenLocation = log.Location
+			if !log.Timestamp.IsZero() {
+				t := log.Timestamp
+				result.LastSeen = &t
+			}
 			break
+		}
+	}
+	// If not currently present, find the newest active=1 for LastSeen
+	if result.Location == nil {
+		for _, log := range logs {
+			if log.Active {
+				result.LastSeenLocation = log.Location
+				if !log.Timestamp.IsZero() {
+					t := log.Timestamp
+					result.LastSeen = &t
+				}
+				break
+			}
 		}
 	}
 
