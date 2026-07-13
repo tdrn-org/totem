@@ -5,7 +5,7 @@ go 1.26
 require (
 	github.com/BurntSushi/toml v1.6.0
 	github.com/rs/cors v1.11.1
-	github.com/tdrn-org/go-log v0.5.6
+	github.com/tdrn-org/go-log v0.5.7
 )
 
 require (
