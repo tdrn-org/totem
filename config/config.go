@@ -31,6 +31,7 @@ type Config struct {
 	Logging   LoggingConfig    `toml:"logging"`
 	Server    ServerConfig     `toml:"server"`
 	Store     StoreConfig      `toml:"store"`
+	Notify    NotifyConfig     `toml:"notify"`
 	Locations []LocationConfig `toml:"location"`
 	Services  struct {
 		FritzboxServices  []FritzboxConfig  `toml:"fritzbox"`

@@ -30,6 +30,7 @@ import (
 	"github.com/tdrn-org/go-database/memory"
 	"github.com/tdrn-org/go-database/sqlite"
 	"github.com/tdrn-org/go-httpserver"
+	"github.com/tdrn-org/go-notify"
 	"github.com/tdrn-org/go-tlsconf/tlsclient"
 	"github.com/tdrn-org/totem/config"
 	"github.com/tdrn-org/totem/internal/adapters/integration"
@@ -44,17 +45,18 @@ import (
 const serverJobTickerSchedule time.Duration = 5 * time.Minute
 
 type Server struct {
-	cfg                 *config.Config
-	dataStore           *data.Store
-	httpServer          *httpserver.Instance
-	baseURL             *url.URL
-	services            map[string]integration.Service
-	presenceTracker     *application.PresenceTracker
-	jobTicker           *time.Ticker
-	jobTickerShutdown   chan any
-	jobTickerShutdownWG sync.WaitGroup
-	jobs                []jobFunc
-	logger              *slog.Logger
+	cfg                  *config.Config
+	dataStore            *data.Store
+	httpServer           *httpserver.Instance
+	baseURL              *url.URL
+	notificationRegistry *notify.PayloadRegistry
+	services             map[string]integration.Service
+	presenceTracker      *application.PresenceTracker
+	jobTicker            *time.Ticker
+	jobTickerShutdown    chan any
+	jobTickerShutdownWG  sync.WaitGroup
+	jobs                 []jobFunc
+	logger               *slog.Logger
 }
 
 func StartServer(ctx context.Context, cfg *config.Config) (*Server, error) {
@@ -69,6 +71,7 @@ func StartServer(ctx context.Context, cfg *config.Config) (*Server, error) {
 	startFuncs := []func(context.Context, *config.Config) error{
 		s.startStore,
 		s.startHttpServer,
+		s.startNotificationRegistry,
 		s.startIntegrations,
 		s.startApplications,
 		s.startRestAPI,
@@ -203,6 +206,11 @@ func (s *Server) closeHttpServer() error {
 	}
 	s.logger.Info("closing HTTP server...")
 	return s.httpServer.Close()
+}
+
+func (s *Server) startNotificationRegistry(_ context.Context, cfg *config.Config) error {
+	_ = s.notificationRegistry
+	return nil
 }
 
 func (s *Server) startIntegrations(_ context.Context, cfg *config.Config) error {
