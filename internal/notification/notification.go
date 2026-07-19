@@ -33,7 +33,7 @@ type Runtime interface {
 type Service struct {
 	runtime            Runtime
 	cfg                *config.NotifyConfig
-	mattermostPayloads *mattermost.PayloadFactory[*mattermostParams]
+	mattermostPayloads *mattermost.PayloadFactory[mattermostParams]
 	logger             *slog.Logger
 }
 
@@ -65,9 +65,7 @@ func (s *Service) NotifyTransition(ctx context.Context, log *data.UserPresenceLo
 			continue
 		}
 		params := &mattermostTransitionParams{
-			mattermostParams: mattermostParams{
-				Agent: profile.Agent,
-			},
+			Agent:   profile.Agent,
 			Message: notification,
 		}
 		err := payload.Send(ctx, params)

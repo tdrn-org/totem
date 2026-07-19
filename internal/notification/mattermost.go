@@ -24,13 +24,17 @@ import (
 	"github.com/tdrn-org/totem/config"
 )
 
-type mattermostParams struct {
-	Agent string
+type mattermostParams interface {
+	GetAgent() string
 }
 
 type mattermostTransitionParams struct {
-	mattermostParams
+	Agent   string
 	Message string
+}
+
+func (p *mattermostTransitionParams) GetAgent() string {
+	return p.Agent
 }
 
 type mattermostConfig struct {
@@ -45,18 +49,18 @@ func (c *mattermostConfig) GetToken() (string, error) {
 	return c.cfg.MattermostToken, nil
 }
 
-func (c *mattermostConfig) ResolveChannelID(ctx context.Context, client *model.Client4, params *mattermostParams) (string, error) {
+func (c *mattermostConfig) ResolveChannelID(ctx context.Context, client *model.Client4, params mattermostParams) (string, error) {
 	user, _, err := client.GetMe(ctx, "")
 	if err != nil {
 		return "", fmt.Errorf("failed to retrieve User (cause: %w)", err)
 	}
-	agent, _, err := client.GetUserByUsername(ctx, params.Agent, "")
+	agent, _, err := client.GetUserByUsername(ctx, params.GetAgent(), "")
 	if err != nil {
-		return "", fmt.Errorf("failed to retrieve Agent '%s' (cause: %w)", params.Agent, err)
+		return "", fmt.Errorf("failed to retrieve Agent '%s' (cause: %w)", params.GetAgent(), err)
 	}
 	channel, _, err := client.CreateDirectChannel(ctx, user.Id, agent.Id)
 	if err != nil {
-		return "", fmt.Errorf("failed to create direct channel to Agent '%s' (cause: %w)", params.Agent, err)
+		return "", fmt.Errorf("failed to create direct channel to Agent '%s' (cause: %w)", params.GetAgent(), err)
 	}
 	return channel.Id, nil
 }

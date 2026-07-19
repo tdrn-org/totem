@@ -32,6 +32,6 @@ file = "./totem.db"
 [notify]
 mattermost_url = ""
 mattermost_token = ""
-arrive_notification = "@{{.Name}} :arrow_right::house: {{.User}} arrived"
-leave_notification = "@{{.Name}} :house::arrow_right: {{.User}} has left"
+arrival_notification = "@{{.Name}} :arrow_right::house: {{.User}} arrived"
+departure_notification = "@{{.Name}} :house::arrow_right: {{.User}} has left"
 pulse_notification = "@{{.Name}} :anatomical_hear: Pulse message: {{.Message}}"
