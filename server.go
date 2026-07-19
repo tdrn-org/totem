@@ -262,8 +262,10 @@ func (s *Server) startMCPHandler(_ context.Context, _ *config.Config) error {
 func (s *Server) startJobTicker(_ context.Context, cfg *config.Config) error {
 	schedule := serverJobTickerSchedule
 	s.logger.Info("starting job ticker...", slog.String("schedule", schedule.String()))
+	pulseScheduler := application.NewPulseScheduler(s.runtime())
 	s.jobs = []jobFunc{
 		s.presenceTracker.Track,
+		pulseScheduler.RunPulses,
 	}
 	s.jobTicker = time.NewTicker(schedule)
 	s.jobTickerShutdown = make(chan any)

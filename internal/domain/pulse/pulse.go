@@ -26,9 +26,9 @@ import (
 	"time"
 )
 
-// EchoPulse is a self-addressed delayed notification. An agent (e.g., Judy)
+// Pulse is a self-addressed delayed notification. An agent (e.g., Judy)
 // creates a pulse to receive a reminder or check-in at a future time.
-type EchoPulse struct {
+type Pulse struct {
 	ID          string    `json:"id"`
 	Agent       string    `json:"agent"`
 	Message     string    `json:"message"`
@@ -41,13 +41,13 @@ type EchoPulse struct {
 type Store interface {
 	// SavePulse stores a new pending pulse for the given agent. If a
 	// pending pulse already exists for the agent, it is silently overwritten.
-	SavePulse(ctx context.Context, pulse *EchoPulse) error
+	SavePulse(ctx context.Context, pulse *Pulse) error
 
 	// ListAgentPulses returns all saved pulses for an agent (pending + history).
-	ListAgentPulses(ctx context.Context, agent string) ([]*EchoPulse, error)
+	ListAgentPulses(ctx context.Context, agent string) ([]*Pulse, error)
 
-	// ListPendingPulses returns all pulses whose ScheduledAt is in the past.
-	ListPendingPulses(ctx context.Context) ([]*EchoPulse, error)
+	// ListPulses returns all pulses.
+	ListPulses(ctx context.Context) ([]*Pulse, error)
 
 	// DeletePulse removes a pulse by ID.
 	DeletePulse(ctx context.Context, id string) error

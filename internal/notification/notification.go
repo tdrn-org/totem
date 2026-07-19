@@ -24,6 +24,7 @@ import (
 	"github.com/tdrn-org/go-notify/mattermost"
 	"github.com/tdrn-org/totem/config"
 	"github.com/tdrn-org/totem/internal/data"
+	"github.com/tdrn-org/totem/internal/domain/pulse"
 )
 
 type Runtime interface {
@@ -71,13 +72,21 @@ func (s *Service) NotifyTransition(ctx context.Context, log *data.UserPresenceLo
 		}
 		err := payload.Send(ctx, params)
 		if err != nil {
-			s.logger.Warn("failed to send notification", slog.Any("err", err))
+			s.logger.Warn("failed to send transition notification", slog.Any("err", err))
 		}
 	}
 }
 
-func (s *Service) PostPulse(ctx context.Context) error {
-	return nil
+func (s *Service) PostPulse(ctx context.Context, pulse *pulse.Pulse) {
+	payload := s.mattermostPayloads.NewPayload(s.cfg.PulseNotification)
+	params := &mattermostPulseParams{
+		Agent:   pulse.Agent,
+		Message: pulse.Message,
+	}
+	err := payload.Send(ctx, params)
+	if err != nil {
+		s.logger.Warn("failed to send transition notification", slog.Any("err", err))
+	}
 }
 
 func (s *Service) Pulse(ctx context.Context) {

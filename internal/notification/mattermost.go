@@ -38,6 +38,15 @@ func (p *mattermostTransitionParams) GetAgent() string {
 	return p.Agent
 }
 
+type mattermostPulseParams struct {
+	Agent   string
+	Message string
+}
+
+func (p *mattermostPulseParams) GetAgent() string {
+	return p.Agent
+}
+
 type mattermostConfig struct {
 	cfg *config.NotifyConfig
 }

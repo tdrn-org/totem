@@ -58,7 +58,7 @@ func (s *Store) ListUsers(ctx context.Context) ([]*domain.User, error) {
 }
 
 func (s *Store) AddUser(ctx context.Context, name string, defaultLocation *domain.Location) (*domain.User, error) {
-	storeUser, err := model.AddUser(ctx, s.driver, name, defaultLocation.ID)
+	storeUser, err := model.InsertUser(ctx, s.driver, name, defaultLocation.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -71,7 +71,7 @@ func (s *Store) AddUser(ctx context.Context, name string, defaultLocation *domai
 
 func (s *Store) AddUserDevice(ctx context.Context, user *domain.User, mac net.HardwareAddr, name string) (*domain.UserDevice, error) {
 	storeUser := model.ExistingUser(s.driver, user.ID, user.Name, user.DefaultLocation.ID)
-	device, err := storeUser.AddDevice(ctx, mac, name)
+	device, err := storeUser.AddDevice(ctx, s.driver, mac, name)
 	if err != nil {
 		return nil, err
 	}
@@ -92,12 +92,12 @@ func (s *Store) RemoveUserDevice(ctx context.Context, user *domain.User, mac net
 
 func (s *Store) UpdateUser(ctx context.Context, user *domain.User) error {
 	modelUser := s.user2Model(user)
-	return modelUser.Update(ctx)
+	return modelUser.Update(ctx, s.driver)
 }
 
 func (s *Store) DeleteUser(ctx context.Context, user *domain.User) error {
 	modelUser := s.user2Model(user)
-	return modelUser.Delete(ctx)
+	return modelUser.Delete(ctx, s.driver)
 }
 
 func (s *Store) model2User(storeUser *model.User) (*domain.User, error) {

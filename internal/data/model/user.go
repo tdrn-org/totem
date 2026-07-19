@@ -25,7 +25,6 @@ import (
 )
 
 type User struct {
-	driver            *database.Driver
 	ID                string `db:"id"`
 	Name              string `db:"name"`
 	DefaultLocationID string `db:"default_location_id"`
@@ -38,44 +37,39 @@ type UserDevice struct {
 	UserID string `db:"user_id"`
 }
 
-// AddUser creates and stores a new user without any devices.
-func AddUser(ctx context.Context, driver *database.Driver, name, defaultLocationID string) (*User, error) {
+//go:embed user.insert.sql
+var insertUserSQL string
+
+// InsertUser inserts a new user without any devices.
+func InsertUser(ctx context.Context, driver *database.Driver, name, defaultLocationID string) (*User, error) {
+	txCtx, tx, err := driver.BeginTx(ctx)
+	if err != nil {
+		return nil, err
+	}
+	defer tx.RollbackUncommitedTx(txCtx)
+
 	user := &User{
-		driver:            driver,
 		ID:                database.NewID(),
 		Name:              name,
 		DefaultLocationID: defaultLocationID,
 		Devices:           []*UserDevice{},
 	}
-	err := user.insert(ctx)
+	err = tx.ExecTx(txCtx, insertUserSQL, user.ID, user.Name, user.DefaultLocationID)
 	if err != nil {
 		return nil, err
 	}
+
+	err = tx.CommitTx(txCtx)
+	if err != nil {
+		return nil, err
+	}
+
 	return user, nil
-}
-
-//go:embed user.insert.sql
-var insertUserSQL string
-
-func (u *User) insert(ctx context.Context) error {
-	txCtx, tx, err := u.driver.BeginTx(ctx)
-	if err != nil {
-		return err
-	}
-	defer tx.RollbackUncommitedTx(txCtx)
-
-	err = tx.ExecTx(txCtx, insertUserSQL, u.ID, u.Name, u.DefaultLocationID)
-	if err != nil {
-		return err
-	}
-
-	return tx.CommitTx(txCtx)
 }
 
 // ExistingUser creates a new user without any devices, from already stored data
 func ExistingUser(driver *database.Driver, id, name, defaultLocationID string) *User {
 	return &User{
-		driver:            driver,
 		ID:                id,
 		Name:              name,
 		DefaultLocationID: defaultLocationID,
@@ -98,8 +92,8 @@ func (u *User) ExistingDevice(mac net.HardwareAddr, name string) *UserDevice {
 var updateUserByIDSQL string
 
 // Update updates the stored data for the user as well as any associated device
-func (u *User) Update(ctx context.Context) error {
-	txCtx, tx, err := u.driver.BeginTx(ctx)
+func (u *User) Update(ctx context.Context, driver *database.Driver) error {
+	txCtx, tx, err := driver.BeginTx(ctx)
 	if err != nil {
 		return err
 	}
@@ -134,8 +128,8 @@ func (u *User) updateUserDevices(ctx context.Context, tx *database.Tx) error {
 var insertUserDeviceSQL string
 
 // AddDevice creates and stores a new device for the given user.
-func (u *User) AddDevice(ctx context.Context, mac net.HardwareAddr, name string) (*UserDevice, error) {
-	txCtx, tx, err := u.driver.BeginTx(ctx)
+func (u *User) AddDevice(ctx context.Context, driver *database.Driver, mac net.HardwareAddr, name string) (*UserDevice, error) {
+	txCtx, tx, err := driver.BeginTx(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -164,8 +158,8 @@ func (u *User) AddDevice(ctx context.Context, mac net.HardwareAddr, name string)
 var deleteUserDeviceByMACSQL string
 
 // RemoveDevice removes and deletes the given device for the given user.
-func (u *User) RemoveDevice(ctx context.Context, mac net.HardwareAddr) error {
-	txCtx, tx, err := u.driver.BeginTx(ctx)
+func (u *User) RemoveDevice(ctx context.Context, driver *database.Driver, mac net.HardwareAddr) error {
+	txCtx, tx, err := driver.BeginTx(ctx)
 	if err != nil {
 		return err
 	}
@@ -211,9 +205,7 @@ func SelectUserByID(ctx context.Context, driver *database.Driver, userID string)
 	defer userRows.Close()
 	var user *User
 	if userRows.Next() {
-		user = &User{
-			driver: driver,
-		}
+		user = &User{}
 		err = database.Scan(userRows, user)
 		if err != nil {
 			return nil, err
@@ -251,9 +243,7 @@ func SelectUsers(ctx context.Context, driver *database.Driver) ([]*User, error) 
 	}
 	defer userRows.Close()
 	for userRows.Next() {
-		user := &User{
-			driver: driver,
-		}
+		user := &User{}
 		err = database.Scan(userRows, user)
 		if err != nil {
 			return nil, err
@@ -304,8 +294,8 @@ var deleteUserDevicesByUserIDSQL string
 var deleteUserByIDSQL string
 
 // Delete deletes the given user and any associated user device
-func (u *User) Delete(ctx context.Context) error {
-	txCtx, tx, err := u.driver.BeginTx(ctx)
+func (u *User) Delete(ctx context.Context, driver *database.Driver) error {
+	txCtx, tx, err := driver.BeginTx(ctx)
 	if err != nil {
 		return err
 	}
