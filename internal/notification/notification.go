@@ -65,8 +65,9 @@ func (s *Service) NotifyTransition(ctx context.Context, log *data.UserPresenceLo
 			continue
 		}
 		params := &mattermostTransitionParams{
-			Agent:   profile.Agent,
-			Message: notification,
+			Agent:    profile.Agent,
+			User:     log.User.Name,
+			Location: log.Location.Name,
 		}
 		err := payload.Send(ctx, params)
 		if err != nil {

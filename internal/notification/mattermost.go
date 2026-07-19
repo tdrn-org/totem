@@ -29,8 +29,9 @@ type mattermostParams interface {
 }
 
 type mattermostTransitionParams struct {
-	Agent   string
-	Message string
+	Agent    string
+	User     string
+	Location string
 }
 
 func (p *mattermostTransitionParams) GetAgent() string {
