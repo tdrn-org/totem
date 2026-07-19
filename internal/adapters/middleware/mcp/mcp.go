@@ -28,6 +28,7 @@ import (
 	"github.com/tdrn-org/totem/internal/buildinfo"
 	"github.com/tdrn-org/totem/internal/data"
 	"github.com/tdrn-org/totem/internal/domain"
+	"github.com/tdrn-org/totem/internal/notification"
 )
 
 // Runtime provides the MCP handler access to the server's services and configuration.
@@ -37,6 +38,7 @@ type Runtime interface {
 	Services() map[string]integration.Service
 	DataStore() *data.Store
 	PresenceTracker() *application.PresenceTracker
+	NotificationService() *notification.Service
 	ResolveLocationID(locationID string) *domain.Location
 }
 
@@ -88,6 +90,7 @@ func NewHandler(runtime Runtime) http.Handler {
 	registerSmarthomeTools(server, runtime)
 	registerMediaTools(server, runtime)
 	registerPresenceTools(server, runtime)
+	registerPulseTools(server, runtime)
 
 	getServer := func(_ *http.Request) *mcp.Server {
 		return server
