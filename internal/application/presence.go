@@ -171,7 +171,7 @@ func (logs userPresenceLogs) EvalPresence() *presence.UserPresence {
 func (logs userPresenceLogs) IsTransition(current *data.UserPresenceLog) bool {
 	for _, log := range logs {
 		if log.Location.ID == current.Location.ID {
-			return log.Active == current.Active
+			return log.Active != current.Active
 		}
 	}
 	return false
