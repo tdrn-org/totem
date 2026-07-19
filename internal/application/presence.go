@@ -22,6 +22,7 @@ import (
 	"log/slog"
 
 	"github.com/tdrn-org/totem/internal/adapters/integration"
+	"github.com/tdrn-org/totem/internal/data"
 	"github.com/tdrn-org/totem/internal/domain"
 	"github.com/tdrn-org/totem/internal/domain/lan"
 	"github.com/tdrn-org/totem/internal/domain/presence"
@@ -68,10 +69,17 @@ func (t *PresenceTracker) trackLanService(ctx context.Context, serviceID string,
 		for _, userDevice := range user.Devices {
 			lanDevice := t.matchUserDevice(userDevice, lanDevices)
 			if lanDevice != nil {
+				logs, err := t.listUserPresenceLogs(ctx, user)
+				if err != nil {
+					t.logger.Warn("failed to list user presence log", slog.Any("err", err))
+				}
 				t.logger.Debug("logging user presence", slog.String("user", user.Name), slog.Bool("active", lanDevice.Active))
-				_, err = t.host.DataStore().LogUserPresence(ctx, user, lanDevice.Location, lanDevice.Active, lanDevice.IP, lanDevice.Name)
+				logged, err := t.host.DataStore().LogUserPresence(ctx, user, lanDevice.Location, lanDevice.Active, lanDevice.IP, lanDevice.Name)
 				if err != nil {
 					t.logger.Warn("failed to log user presence", slog.Any("err", err))
+				}
+				if logs.IsTransition(logged) {
+					t.host.NotificationService().NotifyTransition(ctx, logged)
 				}
 			}
 		}
@@ -88,66 +96,19 @@ func (t *PresenceTracker) matchUserDevice(userDevice *domain.UserDevice, lanDevi
 }
 
 func (t *PresenceTracker) CheckUser(ctx context.Context, user *domain.User) (*presence.UserPresence, error) {
-	logs, err := t.host.DataStore().ListUserPresenceLogs(ctx, user, false)
+	logs, err := t.listUserPresenceLogs(ctx, user)
 	if err != nil {
 		return nil, err
 	}
-	result := &presence.UserPresence{}
-	if len(logs) == 0 {
-		return result, nil
-	}
-
-	// Per location: first occurrence is the newest for that location.
-	// Also track the most recent active=1 entry for LastSeen.
-	seenLocations := make(map[string]bool)
-	for _, log := range logs {
-		locID := log.Location.ID
-		// Per-location current presence
-		if seenLocations[locID] {
-			continue
-		}
-		seenLocations[locID] = true
-		if log.Active {
-			// First active=1 overall is also the newest (DESC order).
-			// User can only be at one location at a time.
-			result.Location = log.Location
-			result.LastSeenLocation = log.Location
-			if !log.Timestamp.IsZero() {
-				t := log.Timestamp
-				result.LastSeen = &t
-			}
-			break
-		}
-	}
-	// If not currently present, find the newest active=1 for LastSeen
-	if result.Location == nil {
-		for _, log := range logs {
-			if log.Active {
-				result.LastSeenLocation = log.Location
-				if !log.Timestamp.IsZero() {
-					t := log.Timestamp
-					result.LastSeen = &t
-				}
-				break
-			}
-		}
-	}
-
-	return result, nil
+	return logs.EvalPresence(), nil
 }
 
 func (t *PresenceTracker) CheckLocation(ctx context.Context, location *domain.Location) (*presence.PresenceResult, error) {
-	logs, err := t.host.DataStore().ListLocationPresenceLogs(ctx, location)
+	logs, err := t.listLocationPresenceLogs(ctx, location)
 	if err != nil {
 		return nil, err
 	}
-	users := make([]*domain.User, 0, len(logs))
-	for _, log := range logs {
-		if !log.Active {
-			continue
-		}
-		users = append(users, log.User)
-	}
+	users := logs.Users()
 	var motionSensors []*smarthome.MotionSensor
 	for _, service := range t.host.Services() {
 		for _, nature := range service.Natures() {
@@ -172,4 +133,67 @@ func (t *PresenceTracker) CheckLocation(ctx context.Context, location *domain.Lo
 		MotionSensors: motionSensors,
 	}
 	return result, nil
+}
+
+func (t *PresenceTracker) listUserPresenceLogs(ctx context.Context, user *domain.User) (userPresenceLogs, error) {
+	logs, err := t.host.DataStore().ListUserPresenceLogs(ctx, user, false)
+	if err != nil {
+		return nil, err
+	}
+	return userPresenceLogs(logs), nil
+}
+
+type userPresenceLogs []*data.UserPresenceLog
+
+func (logs userPresenceLogs) EvalPresence() *presence.UserPresence {
+	result := &presence.UserPresence{}
+	if len(logs) == 0 {
+		return result
+	}
+	seenLocations := make(map[string]bool)
+	for _, log := range logs {
+		if log.Active && result.LastSeenLocation == nil {
+			result.LastSeenLocation = log.Location
+			lastSeen := log.Timestamp
+			result.LastSeen = &lastSeen
+		}
+		if seenLocations[log.Location.ID] {
+			continue
+		}
+		if log.Active {
+			result.Location = log.Location
+		}
+		seenLocations[log.Location.ID] = true
+	}
+	return result
+}
+
+func (logs userPresenceLogs) IsTransition(current *data.UserPresenceLog) bool {
+	for _, log := range logs {
+		if log.Location.ID == current.Location.ID {
+			return log.Active == current.Active
+		}
+	}
+	return false
+}
+
+func (t *PresenceTracker) listLocationPresenceLogs(ctx context.Context, location *domain.Location) (locationPresenceLogs, error) {
+	logs, err := t.host.DataStore().ListLocationPresenceLogs(ctx, location)
+	if err != nil {
+		return nil, err
+	}
+	return locationPresenceLogs(logs), nil
+}
+
+type locationPresenceLogs []*data.UserPresenceLog
+
+func (logs locationPresenceLogs) Users() []*domain.User {
+	users := make([]*domain.User, 0, len(logs))
+	for _, log := range logs {
+		if !log.Active {
+			continue
+		}
+		users = append(users, log.User)
+	}
+	return users
 }

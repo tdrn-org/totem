@@ -30,7 +30,6 @@ import (
 	"github.com/tdrn-org/go-database/memory"
 	"github.com/tdrn-org/go-database/sqlite"
 	"github.com/tdrn-org/go-httpserver"
-	"github.com/tdrn-org/go-notify"
 	"github.com/tdrn-org/go-tlsconf/tlsclient"
 	"github.com/tdrn-org/totem/config"
 	"github.com/tdrn-org/totem/internal/adapters/integration"
@@ -40,23 +39,24 @@ import (
 	"github.com/tdrn-org/totem/internal/data"
 	"github.com/tdrn-org/totem/internal/data/model"
 	"github.com/tdrn-org/totem/internal/domain"
+	"github.com/tdrn-org/totem/internal/notification"
 )
 
 const serverJobTickerSchedule time.Duration = 5 * time.Minute
 
 type Server struct {
-	cfg                  *config.Config
-	dataStore            *data.Store
-	httpServer           *httpserver.Instance
-	baseURL              *url.URL
-	notificationRegistry *notify.PayloadRegistry
-	services             map[string]integration.Service
-	presenceTracker      *application.PresenceTracker
-	jobTicker            *time.Ticker
-	jobTickerShutdown    chan any
-	jobTickerShutdownWG  sync.WaitGroup
-	jobs                 []jobFunc
-	logger               *slog.Logger
+	cfg                 *config.Config
+	dataStore           *data.Store
+	httpServer          *httpserver.Instance
+	baseURL             *url.URL
+	notificationService *notification.Service
+	services            map[string]integration.Service
+	presenceTracker     *application.PresenceTracker
+	jobTicker           *time.Ticker
+	jobTickerShutdown   chan any
+	jobTickerShutdownWG sync.WaitGroup
+	jobs                []jobFunc
+	logger              *slog.Logger
 }
 
 func StartServer(ctx context.Context, cfg *config.Config) (*Server, error) {
@@ -71,7 +71,7 @@ func StartServer(ctx context.Context, cfg *config.Config) (*Server, error) {
 	startFuncs := []func(context.Context, *config.Config) error{
 		s.startStore,
 		s.startHttpServer,
-		s.startNotificationRegistry,
+		s.startNotificationService,
 		s.startIntegrations,
 		s.startApplications,
 		s.startRestAPI,
@@ -208,8 +208,8 @@ func (s *Server) closeHttpServer() error {
 	return s.httpServer.Close()
 }
 
-func (s *Server) startNotificationRegistry(_ context.Context, cfg *config.Config) error {
-	_ = s.notificationRegistry
+func (s *Server) startNotificationService(_ context.Context, cfg *config.Config) error {
+	s.notificationService = notification.NewService(s.runtime())
 	return nil
 }
 
@@ -322,6 +322,10 @@ func (runtime *serverRuntime) ResolveLocationID(locationID string) *domain.Locat
 
 func (runtime *serverRuntime) DataStore() *data.Store {
 	return runtime.server.dataStore
+}
+
+func (runtime *serverRuntime) NotificationService() *notification.Service {
+	return runtime.server.notificationService
 }
 
 func (runtime *serverRuntime) Services() map[string]integration.Service {

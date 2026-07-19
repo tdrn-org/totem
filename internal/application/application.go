@@ -19,9 +19,11 @@ package application
 import (
 	"github.com/tdrn-org/totem/internal/adapters/integration"
 	"github.com/tdrn-org/totem/internal/data"
+	"github.com/tdrn-org/totem/internal/notification"
 )
 
 type Host interface {
 	DataStore() *data.Store
+	NotificationService() *notification.Service
 	Services() map[string]integration.Service
 }

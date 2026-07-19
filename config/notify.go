@@ -26,5 +26,6 @@ type NotifyConfig struct {
 }
 
 type NotifyProfileConfig struct {
-	User string `toml:"user"`
+	Agent    string `toml:"agent"`
+	Presence bool   `toml:"presence"`
 }
