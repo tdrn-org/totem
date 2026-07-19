@@ -209,7 +209,11 @@ func (s *Server) closeHttpServer() error {
 }
 
 func (s *Server) startNotificationService(_ context.Context, cfg *config.Config) error {
-	s.notificationService = notification.NewService(s.runtime())
+	notificationService, err := notification.NewService(s.runtime(), &cfg.Notify)
+	if err != nil {
+		return err
+	}
+	s.notificationService = notificationService
 	return nil
 }
 

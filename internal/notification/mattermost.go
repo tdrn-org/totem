@@ -18,26 +18,45 @@ package notification
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/mattermost/mattermost/server/public/model"
+	"github.com/tdrn-org/totem/config"
 )
 
 type mattermostParams struct {
+	Agent string
+}
+
+type mattermostTransitionParams struct {
+	mattermostParams
+	Message string
 }
 
 type mattermostConfig struct {
-	serverURL string
-	token     string
+	cfg *config.NotifyConfig
 }
 
 func (c *mattermostConfig) GetServerURL() (string, error) {
-	return c.serverURL, nil
+	return c.cfg.MattermostURL, nil
 }
 
 func (c *mattermostConfig) GetToken() (string, error) {
-	return c.token, nil
+	return c.cfg.MattermostToken, nil
 }
 
 func (c *mattermostConfig) ResolveChannelID(ctx context.Context, client *model.Client4, params *mattermostParams) (string, error) {
-	return "", nil
+	user, _, err := client.GetMe(ctx, "")
+	if err != nil {
+		return "", fmt.Errorf("failed to retrieve User (cause: %w)", err)
+	}
+	agent, _, err := client.GetUserByUsername(ctx, params.Agent, "")
+	if err != nil {
+		return "", fmt.Errorf("failed to retrieve Agent '%s' (cause: %w)", params.Agent, err)
+	}
+	channel, _, err := client.CreateDirectChannel(ctx, user.Id, agent.Id)
+	if err != nil {
+		return "", fmt.Errorf("failed to create direct channel to Agent '%s' (cause: %w)", params.Agent, err)
+	}
+	return channel.Id, nil
 }

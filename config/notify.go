@@ -17,12 +17,12 @@
 package config
 
 type NotifyConfig struct {
-	MattermostURL      string                `toml:"mattermost_url"`
-	MattermostToken    string                `toml:"mattermost_token"`
-	ArriveNotification string                `toml:"arrive_notification"`
-	LeaveNotification  string                `toml:"leave_notification"`
-	PulseNotification  string                `toml:"pulse_notification"`
-	Profiles           []NotifyProfileConfig `toml:"profile"`
+	MattermostURL         string                `toml:"mattermost_url"`
+	MattermostToken       string                `toml:"mattermost_token"`
+	ArrivalNotification   string                `toml:"arrival_notification"`
+	DepartureNotification string                `toml:"departure_notification"`
+	PulseNotification     string                `toml:"pulse_notification"`
+	Profiles              []NotifyProfileConfig `toml:"profile"`
 }
 
 type NotifyProfileConfig struct {

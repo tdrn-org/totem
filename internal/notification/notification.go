@@ -19,8 +19,10 @@ package notification
 import (
 	"context"
 	"fmt"
+	"log/slog"
 
 	"github.com/tdrn-org/go-notify/mattermost"
+	"github.com/tdrn-org/totem/config"
 	"github.com/tdrn-org/totem/internal/data"
 )
 
@@ -30,13 +32,14 @@ type Runtime interface {
 
 type Service struct {
 	runtime            Runtime
+	cfg                *config.NotifyConfig
 	mattermostPayloads *mattermost.PayloadFactory[*mattermostParams]
+	logger             *slog.Logger
 }
 
-func NewService(runtime Runtime, mattermostURL, mattermostToken string) (*Service, error) {
+func NewService(runtime Runtime, cfg *config.NotifyConfig) (*Service, error) {
 	config := &mattermostConfig{
-		serverURL: mattermostURL,
-		token:     mattermostToken,
+		cfg: cfg,
 	}
 	mattermostPayloads, err := mattermost.NewPayloadFactory(config)
 	if err != nil {
@@ -44,13 +47,34 @@ func NewService(runtime Runtime, mattermostURL, mattermostToken string) (*Servic
 	}
 	service := &Service{
 		runtime:            runtime,
+		cfg:                cfg,
 		mattermostPayloads: mattermostPayloads,
+		logger:             slog.Default(),
 	}
 	return service, nil
 }
 
 func (s *Service) NotifyTransition(ctx context.Context, log *data.UserPresenceLog) {
-
+	notification := s.cfg.DepartureNotification
+	if log.Active {
+		notification = s.cfg.ArrivalNotification
+	}
+	payload := s.mattermostPayloads.NewPayload(notification)
+	for _, profile := range s.cfg.Profiles {
+		if !profile.Presence {
+			continue
+		}
+		params := &mattermostTransitionParams{
+			mattermostParams: mattermostParams{
+				Agent: profile.Agent,
+			},
+			Message: notification,
+		}
+		err := payload.Send(ctx, params)
+		if err != nil {
+			s.logger.Warn("failed to send notification", slog.Any("err", err))
+		}
+	}
 }
 
 func (s *Service) PostPulse(ctx context.Context) error {
