@@ -69,6 +69,42 @@ func registerPulseTools(server *mcp.Server, runtime Runtime) {
 		}, map[string]any{"pulse": p}, nil
 	})
 
+	// echo_pulse_list: list pending pulses for an agent
+	mcp.AddTool(server, &mcp.Tool{
+		Name:        "echo_pulse_list",
+		Description: "Lists all pending echo pulses for an agent. Returns each pulse's ID, message, and scheduled time without modifying them.",
+		InputSchema: map[string]any{
+			"type": "object",
+			"properties": map[string]any{
+				"agent": map[string]any{"type": "string", "description": "The agent whose pulses to list (default: 'judy')."},
+			},
+		},
+	}, func(ctx context.Context, _ *mcp.CallToolRequest, input struct {
+		Agent string `json:"agent"`
+	}) (*mcp.CallToolResult, any, error) {
+		agent := input.Agent
+		if agent == "" {
+			agent = "judy"
+		}
+		pulses, err := runtime.DataStore().ListAgentPulses(ctx, agent)
+		if err != nil {
+			return nil, nil, fmt.Errorf("listing pulses: %w", err)
+		}
+		if len(pulses) == 0 {
+			return &mcp.CallToolResult{
+				Content: []mcp.Content{&mcp.TextContent{Text: fmt.Sprintf("No pending pulse for agent %q.", agent)}},
+			}, nil, nil
+		}
+		text := fmt.Sprintf("Found %d pulse(s) for agent %q:\n", len(pulses), agent)
+		for i, p := range pulses {
+			text += fmt.Sprintf("\n%d. ID: %s\n   Scheduled: %s\n   Message: %q",
+				i+1, p.ID, p.ScheduledAt.Format(time.RFC3339), p.Message)
+		}
+		return &mcp.CallToolResult{
+			Content: []mcp.Content{&mcp.TextContent{Text: text}},
+		}, map[string]any{"pulses": pulses}, nil
+	})
+
 	// echo_pulse_cancel: cancel the pending pulse
 	mcp.AddTool(server, &mcp.Tool{
 		Name:        "echo_pulse_cancel",
