@@ -265,6 +265,9 @@ func (s *Server) startJobTicker(_ context.Context, cfg *config.Config) error {
 	pulseScheduler := application.NewPulseScheduler(s.runtime())
 	s.jobs = []jobFunc{
 		s.presenceTracker.Track,
+		func(ctx context.Context) {
+			s.notificationService.NotifySchedules(ctx, schedule)
+		},
 		pulseScheduler.RunPulses,
 	}
 	s.jobTicker = time.NewTicker(schedule)
