@@ -20,6 +20,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"time"
 
 	"github.com/tdrn-org/go-notify/mattermost"
 	"github.com/tdrn-org/totem/config"
@@ -77,6 +78,24 @@ func (s *Service) NotifyTransition(ctx context.Context, log *data.UserPresenceLo
 	}
 }
 
+func (s *Service) NotifySchedules(ctx context.Context, frequency time.Duration) {
+	now := time.Now()
+	last := now.Add(-frequency)
+	for _, schedule := range s.cfg.Schedules {
+		next := schedule.Schedule.Expression.Next(last)
+		if next.Before(now) {
+			params := &mattermostScheduleParams{
+				Agent: schedule.Agent,
+			}
+			payload := s.mattermostPayloads.NewPayload(schedule.Notification)
+			err := payload.Send(ctx, params)
+			if err != nil {
+				s.logger.Warn("failed to send scheduled notification", slog.Any("err", err))
+			}
+		}
+	}
+}
+
 func (s *Service) PostPulse(ctx context.Context, pulse *pulse.Pulse) {
 	payload := s.mattermostPayloads.NewPayload(s.cfg.PulseNotification)
 	params := &mattermostPulseParams{
@@ -87,7 +106,4 @@ func (s *Service) PostPulse(ctx context.Context, pulse *pulse.Pulse) {
 	if err != nil {
 		s.logger.Warn("failed to send transition notification", slog.Any("err", err))
 	}
-}
-
-func (s *Service) Pulse(ctx context.Context) {
 }

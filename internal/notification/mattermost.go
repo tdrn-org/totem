@@ -38,6 +38,14 @@ func (p *mattermostTransitionParams) GetAgent() string {
 	return p.Agent
 }
 
+type mattermostScheduleParams struct {
+	Agent string
+}
+
+func (p *mattermostScheduleParams) GetAgent() string {
+	return p.Agent
+}
+
 type mattermostPulseParams struct {
 	Agent   string
 	Message string

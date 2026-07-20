@@ -100,6 +100,7 @@ require (
 
 require (
 	github.com/alecthomas/kong v1.16.0
+	github.com/gorhill/cronexpr v0.0.0-20180427100037-88b0669f7d75
 	github.com/mattn/go-isatty v0.0.22 // indirect
 	github.com/modelcontextprotocol/go-sdk v1.6.1
 	github.com/sj14/jellyfin-go v0.4.4

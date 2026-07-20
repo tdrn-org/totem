@@ -29,6 +29,22 @@ type = "sqlite"
 [store.sqlite]
 file = "./totem.db"
 
+[notify]
+mattermost_url = "https://mattermost.mydomain.org"
+mattermost_token = "secret_mattermost_token"
+arrival_notification = "Hello {{.Agent}} I have arrived at {{.Location}}."
+departure_notification = "Hello {{.Agent}} I am leaving and will be back soon."
+pulse_notification = "Hello {{.Agent}} You have asked for the following message: '{{.Message}}'"
+
+[[notify.profile]]
+agent = "agent1"
+presence = true
+
+[[notify.schedule]]
+agent = "agent1"
+schedule = "5 * * * *"
+notification = "Hello {{.Agent}}, check for new emails."
+
 [[location]]
 id = "home1"
 name = "Home 1"

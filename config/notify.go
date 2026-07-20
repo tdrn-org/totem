@@ -16,16 +16,60 @@
 
 package config
 
+import (
+	"fmt"
+
+	"github.com/gorhill/cronexpr"
+)
+
 type NotifyConfig struct {
-	MattermostURL         string                `toml:"mattermost_url"`
-	MattermostToken       string                `toml:"mattermost_token"`
-	ArrivalNotification   string                `toml:"arrival_notification"`
-	DepartureNotification string                `toml:"departure_notification"`
-	PulseNotification     string                `toml:"pulse_notification"`
-	Profiles              []NotifyProfileConfig `toml:"profile"`
+	MattermostURL         string                 `toml:"mattermost_url"`
+	MattermostToken       string                 `toml:"mattermost_token"`
+	ArrivalNotification   string                 `toml:"arrival_notification"`
+	DepartureNotification string                 `toml:"departure_notification"`
+	PulseNotification     string                 `toml:"pulse_notification"`
+	Profiles              []NotifyProfileConfig  `toml:"profile"`
+	Schedules             []NotifyScheduleConfig `toml:"schedule"`
 }
 
 type NotifyProfileConfig struct {
 	Agent    string `toml:"agent"`
 	Presence bool   `toml:"presence"`
+}
+
+type NotifyScheduleConfig struct {
+	Agent        string       `toml:"agent"`
+	Schedule     ScheduleSpec `toml:"schedule"`
+	Notification string       `toml:"notification"`
+}
+
+type ScheduleSpec struct {
+	*cronexpr.Expression
+}
+
+func (spec *ScheduleSpec) Value() string {
+	if spec.Expression == nil {
+		return ""
+	}
+	return spec.Value()
+}
+
+func (spec *ScheduleSpec) MarshalTOML() ([]byte, error) {
+	return []byte(`"` + spec.Value() + `"`), nil
+}
+
+func (spec *ScheduleSpec) UnmarshalTOML(value any) error {
+	expressionString, ok := value.(string)
+	if !ok {
+		return fmt.Errorf("unexpected Cron expression type %v", value)
+	}
+	if expressionString == "" {
+		return nil
+	}
+	parsedExpression, err := cronexpr.Parse(expressionString)
+	if err != nil {
+		return fmt.Errorf("invalid Cron expression: '%s' (cause: %w)", expressionString, err)
+	}
+	spec.Expression = parsedExpression
+	return nil
 }
