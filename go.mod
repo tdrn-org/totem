@@ -111,7 +111,7 @@ require (
 	github.com/tdrn-org/go-diff v0.1.3
 	github.com/tdrn-org/go-httpserver v0.1.1
 	github.com/tdrn-org/go-hue v1.2.0
-	github.com/tdrn-org/go-notify v0.0.3
+	github.com/tdrn-org/go-notify v0.0.4
 	github.com/tdrn-org/go-tlsconf v0.0.10
 	github.com/tdrn-org/go-tr064 v0.3.0
 	golang.org/x/sys v0.47.0 // indirect
