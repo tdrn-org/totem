@@ -106,7 +106,7 @@ require (
 	github.com/sj14/jellyfin-go v0.4.4
 	github.com/stretchr/testify v1.11.1
 	github.com/swaggo/swag v1.16.6
-	github.com/tdrn-org/go-conf v0.0.6
+	github.com/tdrn-org/go-conf v0.0.7
 	github.com/tdrn-org/go-database v0.1.1
 	github.com/tdrn-org/go-diff v0.1.3
 	github.com/tdrn-org/go-httpserver v0.1.1
