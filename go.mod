@@ -108,7 +108,7 @@ require (
 	github.com/swaggo/swag v1.16.6
 	github.com/tdrn-org/go-conf v0.0.7
 	github.com/tdrn-org/go-database v0.1.1
-	github.com/tdrn-org/go-diff v0.1.3
+	github.com/tdrn-org/go-diff v0.1.4
 	github.com/tdrn-org/go-httpserver v0.1.2
 	github.com/tdrn-org/go-hue v1.2.0
 	github.com/tdrn-org/go-notify v0.0.4
