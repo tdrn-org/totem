@@ -79,7 +79,7 @@ require (
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
 	golang.org/x/crypto v0.54.0 // indirect
 	golang.org/x/mod v0.37.0 // indirect
-	golang.org/x/net v0.56.0 // indirect
+	golang.org/x/net v0.57.0 // indirect
 	golang.org/x/oauth2 v0.36.0 // indirect
 	golang.org/x/sync v0.22.0 // indirect
 	golang.org/x/text v0.40.0 // indirect
@@ -109,10 +109,10 @@ require (
 	github.com/tdrn-org/go-conf v0.0.7
 	github.com/tdrn-org/go-database v0.1.1
 	github.com/tdrn-org/go-diff v0.1.3
-	github.com/tdrn-org/go-httpserver v0.1.1
+	github.com/tdrn-org/go-httpserver v0.1.2
 	github.com/tdrn-org/go-hue v1.2.0
 	github.com/tdrn-org/go-notify v0.0.4
-	github.com/tdrn-org/go-tlsconf v0.0.10
+	github.com/tdrn-org/go-tlsconf v0.0.11
 	github.com/tdrn-org/go-tr064 v0.3.0
 	golang.org/x/sys v0.47.0 // indirect
 )
