@@ -19,7 +19,6 @@ package totem
 import (
 	"log/slog"
 	"net/url"
-	"reflect"
 	"time"
 
 	"github.com/rs/cors"
@@ -47,7 +46,6 @@ func applyLoggingConfig(cfg *config.LoggingConfig) {
 		SyslogAddress:  cfg.SyslogAddress,
 		SyslogEncoding: cfg.SyslogEncoding,
 		SyslogFacility: cfg.SyslogFacility,
-		SyslogAppName:  reflect.TypeFor[Server]().PkgPath(),
 	}
 	logger, _ := logConfig.GetLogger(loglevel.LevelVar())
 	slog.SetDefault(logger)
