@@ -28,12 +28,16 @@ func TestPresenceLog(t *testing.T) {
 	driver := newTestDB(t)
 	defer driver.Close()
 
+	// Add User
+	user1, err := model.InsertUser(t.Context(), driver, "user1", "default")
+	require.NoError(t, err)
+
 	// Add logs
-	log1, err := model.LogPresence(t.Context(), driver, "user1", "default", true, netip.Addr{}, "")
+	log1, err := model.LogPresence(t.Context(), driver, user1.ID, "default", true, netip.Addr{}, "")
 	require.NoError(t, err)
-	log2, err := model.LogPresence(t.Context(), driver, "user1", "default", false, netip.Addr{}, "")
+	log2, err := model.LogPresence(t.Context(), driver, user1.ID, "default", false, netip.Addr{}, "")
 	require.NoError(t, err)
-	log3, err := model.LogPresence(t.Context(), driver, "user1", "default", true, netip.Addr{}, "")
+	log3, err := model.LogPresence(t.Context(), driver, user1.ID, "default", true, netip.Addr{}, "")
 	require.NoError(t, err)
 
 	// Select logs
