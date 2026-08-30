@@ -20,6 +20,7 @@ import (
 	"bytes"
 	"context"
 	"log/slog"
+	"time"
 
 	"github.com/tdrn-org/totem/internal/adapters/integration"
 	"github.com/tdrn-org/totem/internal/data"
@@ -41,7 +42,7 @@ func NewPresenceTracker(host Host) *PresenceTracker {
 	}
 }
 
-func (t *PresenceTracker) Track(ctx context.Context) {
+func (t *PresenceTracker) Track(ctx context.Context, last, now time.Time) error {
 	t.logger.Info("updating tracking logs...")
 	for _, service := range t.host.Services() {
 		for _, nature := range service.Natures() {
@@ -51,6 +52,7 @@ func (t *PresenceTracker) Track(ctx context.Context) {
 			}
 		}
 	}
+	return nil
 }
 
 func (t *PresenceTracker) trackLanService(ctx context.Context, serviceID string, service lan.LanService) {

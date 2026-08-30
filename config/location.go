@@ -17,47 +17,14 @@
 package config
 
 import (
-	"fmt"
-	"time"
+	"github.com/tdrn-org/go-config-toml"
 )
 
 type LocationConfig struct {
-	ID        string       `toml:"id"`
-	Name      string       `toml:"name"`
-	Address   string       `toml:"address"`
-	Latitude  float64      `toml:"latitude"`
-	Longitude float64      `toml:"longitude"`
-	Timezone  TimezoneSpec `toml:"timezone"`
-}
-
-type TimezoneSpec struct {
-	*time.Location
-}
-
-func (spec *TimezoneSpec) Value() string {
-	if spec.Location == nil {
-		return ""
-	}
-	return spec.String()
-}
-
-func (spec *TimezoneSpec) MarshalTOML() ([]byte, error) {
-	return []byte(`"` + spec.Value() + `"`), nil
-}
-
-func (spec *TimezoneSpec) UnmarshalTOML(value any) error {
-	locationString, ok := value.(string)
-	if !ok {
-		return fmt.Errorf("unexpected location type %v", value)
-	}
-	location := time.Local
-	if locationString != "" {
-		parsedLocation, err := time.LoadLocation(locationString)
-		if err != nil {
-			return fmt.Errorf("invalid location: '%s' (cause: %w)", locationString, err)
-		}
-		location = parsedLocation
-	}
-	spec.Location = location
-	return nil
+	ID        string                  `toml:"id"`
+	Name      string                  `toml:"name"`
+	Address   string                  `toml:"address"`
+	Latitude  float64                 `toml:"latitude"`
+	Longitude float64                 `toml:"longitude"`
+	Timezone  config.TimeLocationSpec `toml:"timezone"`
 }

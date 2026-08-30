@@ -78,12 +78,9 @@ func (s *Service) NotifyTransition(ctx context.Context, log *data.UserPresenceLo
 	}
 }
 
-func (s *Service) NotifySchedules(ctx context.Context, frequency time.Duration) {
-	now := time.Now()
-	last := now.Add(-frequency)
+func (s *Service) NotifySchedules(ctx context.Context, last, now time.Time) error {
 	for _, schedule := range s.cfg.Schedules {
-		next := schedule.Schedule.Expression.Next(last)
-		if next.Before(now) {
+		if schedule.Schedule.InInterval(last, now) {
 			params := &mattermostScheduleParams{
 				Agent: schedule.Agent,
 			}
@@ -94,6 +91,7 @@ func (s *Service) NotifySchedules(ctx context.Context, frequency time.Duration) 
 			}
 		}
 	}
+	return nil
 }
 
 func (s *Service) PostPulse(ctx context.Context, pulse *pulse.Pulse) {

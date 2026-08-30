@@ -16,11 +16,13 @@
 
 package config
 
+import "github.com/tdrn-org/go-config-toml"
+
 type HuebridgeConfig struct {
-	Enabled    bool         `toml:"enabled"`
-	LocationID string       `toml:"location_id"`
-	Address    string       `toml:"address"`
-	BridgeID   string       `toml:"bridge_id"`
-	Login      string       `toml:"login"`
-	Timeout    DurationSpec `toml:"timeout"`
+	Enabled    bool                `toml:"enabled"`
+	LocationID string              `toml:"location_id"`
+	Address    string              `toml:"address"`
+	BridgeID   string              `toml:"bridge_id"`
+	Login      string              `toml:"login"`
+	Timeout    config.DurationSpec `toml:"timeout"`
 }

@@ -19,19 +19,21 @@ package config
 import (
 	"fmt"
 	"log/slog"
+
+	"github.com/tdrn-org/go-config-toml"
 )
 
 type ServerConfig struct {
-	Address            string         `toml:"address"`
-	Protocol           ServerProtocol `toml:"protocol"`
-	CertFile           string         `toml:"cert_file"`
-	KeyFile            string         `toml:"key_file"`
-	PublicURL          URLSpec        `toml:"public_url"`
-	TrustedProxies     NetworkSpecs   `toml:"trusted_proxies"`
-	TrustedHeaders     []string       `toml:"trusted_headers"`
-	AllowedOrigins     []string       `toml:"allowed_origins"`
-	AccessLog          string         `toml:"access_log"`
-	AccessLogSizeLimit int64          `toml:"access_log_size_limit"`
+	Address            string              `toml:"address"`
+	Protocol           ServerProtocol      `toml:"protocol"`
+	CertFile           string              `toml:"cert_file"`
+	KeyFile            string              `toml:"key_file"`
+	PublicURL          config.URLSpec      `toml:"public_url"`
+	TrustedProxies     config.NetworkSpecs `toml:"trusted_proxies"`
+	TrustedHeaders     []string            `toml:"trusted_headers"`
+	AllowedOrigins     []string            `toml:"allowed_origins"`
+	AccessLog          string              `toml:"access_log"`
+	AccessLogSizeLimit int64               `toml:"access_log_size_limit"`
 }
 
 type ServerProtocol string

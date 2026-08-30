@@ -3,7 +3,6 @@ module github.com/tdrn-org/totem
 go 1.26.7
 
 require (
-	github.com/BurntSushi/toml v1.6.0
 	github.com/mattermost/mattermost/server/public v0.4.4
 	github.com/rs/cors v1.11.1
 	github.com/tdrn-org/go-log v0.6.1
@@ -53,6 +52,7 @@ require (
 	github.com/oklog/run v1.2.0 // indirect
 	github.com/pborman/uuid v1.2.1 // indirect
 	github.com/pelletier/go-toml v1.9.5 // indirect
+	github.com/pelletier/go-toml/v2 v2.4.3 // indirect
 	github.com/philhofer/fwd v1.2.0 // indirect
 	github.com/pkg/errors v0.9.1 // indirect
 	github.com/remyoudompheng/bigfft v0.0.0-20230129092748-24d4a6f8daec // indirect
@@ -97,18 +97,20 @@ require (
 )
 
 require (
+	github.com/adhocore/gronx v1.20.3 // indirect
 	github.com/alecthomas/kong v1.16.1
-	github.com/gorhill/cronexpr v0.0.0-20180427100037-88b0669f7d75
 	github.com/mattn/go-isatty v0.0.24 // indirect
 	github.com/modelcontextprotocol/go-sdk v1.7.0
 	github.com/sj14/jellyfin-go v0.4.4
 	github.com/stretchr/testify v1.12.1
 	github.com/swaggo/swag v1.16.6
 	github.com/tdrn-org/go-conf v0.0.8
+	github.com/tdrn-org/go-config-toml v0.0.1
 	github.com/tdrn-org/go-database v0.1.3
 	github.com/tdrn-org/go-diff v0.1.4
 	github.com/tdrn-org/go-httpserver v0.1.3
 	github.com/tdrn-org/go-hue v1.2.1
+	github.com/tdrn-org/go-jobticker v0.0.1
 	github.com/tdrn-org/go-notify v0.0.6
 	github.com/tdrn-org/go-tlsconf v0.0.12
 	github.com/tdrn-org/go-tr064 v0.3.0

@@ -34,14 +34,13 @@ func NewPulseScheduler(host Host) *PulseScheduler {
 	}
 }
 
-func (t *PulseScheduler) RunPulses(ctx context.Context) {
+func (t *PulseScheduler) RunPulses(ctx context.Context, last, now time.Time) error {
 	t.logger.Info("running pulses...")
 	pulses, err := t.host.DataStore().ListPulses(ctx)
 	if err != nil {
 		t.logger.Warn("failed to list Pulses", slog.Any("err", err))
-		return
+		return err
 	}
-	now := time.Now()
 	for _, pulse := range pulses {
 		if pulse.ScheduledAt.Before(now) {
 			err := t.host.DataStore().DeletePulse(ctx, pulse.ID)
@@ -52,4 +51,5 @@ func (t *PulseScheduler) RunPulses(ctx context.Context) {
 			t.host.NotificationService().PostPulse(ctx, pulse)
 		}
 	}
+	return nil
 }

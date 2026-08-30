@@ -17,9 +17,7 @@
 package config
 
 import (
-	"fmt"
-
-	"github.com/gorhill/cronexpr"
+	"github.com/tdrn-org/go-jobticker"
 )
 
 type NotifyConfig struct {
@@ -38,38 +36,7 @@ type NotifyProfileConfig struct {
 }
 
 type NotifyScheduleConfig struct {
-	Agent        string       `toml:"agent"`
-	Schedule     ScheduleSpec `toml:"schedule"`
-	Notification string       `toml:"notification"`
-}
-
-type ScheduleSpec struct {
-	*cronexpr.Expression
-}
-
-func (spec *ScheduleSpec) Value() string {
-	if spec.Expression == nil {
-		return ""
-	}
-	return spec.Value()
-}
-
-func (spec *ScheduleSpec) MarshalTOML() ([]byte, error) {
-	return []byte(`"` + spec.Value() + `"`), nil
-}
-
-func (spec *ScheduleSpec) UnmarshalTOML(value any) error {
-	expressionString, ok := value.(string)
-	if !ok {
-		return fmt.Errorf("unexpected Cron expression type %v", value)
-	}
-	if expressionString == "" {
-		return nil
-	}
-	parsedExpression, err := cronexpr.Parse(expressionString)
-	if err != nil {
-		return fmt.Errorf("invalid Cron expression: '%s' (cause: %w)", expressionString, err)
-	}
-	spec.Expression = parsedExpression
-	return nil
+	Agent        string                 `toml:"agent"`
+	Schedule     jobticker.ScheduleSpec `toml:"schedule"`
+	Notification string                 `toml:"notification"`
 }

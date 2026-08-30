@@ -16,8 +16,10 @@
 
 package config
 
+import "github.com/tdrn-org/go-config-toml"
+
 type FritzboxConfig struct {
-	Enabled    bool    `toml:"enabled"`
-	LocationID string  `toml:"location_id"`
-	DeviceURL  URLSpec `toml:"device_url"`
+	Enabled    bool           `toml:"enabled"`
+	LocationID string         `toml:"location_id"`
+	DeviceURL  config.URLSpec `toml:"device_url"`
 }

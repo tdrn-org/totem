@@ -23,13 +23,13 @@ import (
 	"log/slog"
 	"net/http"
 	"net/url"
-	"sync"
 	"time"
 
 	"github.com/tdrn-org/go-database"
 	"github.com/tdrn-org/go-database/memory"
 	"github.com/tdrn-org/go-database/sqlite"
 	"github.com/tdrn-org/go-httpserver"
+	"github.com/tdrn-org/go-jobticker"
 	"github.com/tdrn-org/go-tlsconf/tlsclient"
 	"github.com/tdrn-org/totem/config"
 	"github.com/tdrn-org/totem/internal/adapters/integration"
@@ -52,10 +52,7 @@ type Server struct {
 	notificationService *notification.Service
 	services            map[string]integration.Service
 	presenceTracker     *application.PresenceTracker
-	jobTicker           *time.Ticker
-	jobTickerShutdown   chan any
-	jobTickerShutdownWG sync.WaitGroup
-	jobs                []jobFunc
+	jobTicker           *jobticker.SequentialQueue
 	logger              *slog.Logger
 }
 
@@ -259,50 +256,22 @@ func (s *Server) startMCPHandler(_ context.Context, _ *config.Config) error {
 	return nil
 }
 
-func (s *Server) startJobTicker(_ context.Context, cfg *config.Config) error {
+func (s *Server) startJobTicker(ctx context.Context, cfg *config.Config) error {
 	schedule := serverJobTickerSchedule
-	s.logger.Info("starting job ticker...", slog.String("schedule", schedule.String()))
+	deadline := 4 * serverJobTickerSchedule
 	pulseScheduler := application.NewPulseScheduler(s.runtime())
-	s.jobs = []jobFunc{
+	jobs := []jobticker.JobFunc{
 		s.presenceTracker.Track,
-		func(ctx context.Context) {
-			s.notificationService.NotifySchedules(ctx, schedule)
-		},
+		s.notificationService.NotifySchedules,
 		pulseScheduler.RunPulses,
 	}
-	s.jobTicker = time.NewTicker(schedule)
-	s.jobTickerShutdown = make(chan any)
-	s.jobTickerShutdownWG.Go(func() {
-		for stopped := false; !stopped; {
-			select {
-			case <-s.jobTickerShutdown:
-				stopped = true
-			case <-s.jobTicker.C:
-				s.runJobs()
-			}
-		}
-		s.logger.Info("job ticker stopped")
-	})
+	s.jobTicker = jobticker.StartSequential(ctx, schedule, deadline, jobs...)
 	return nil
 }
 
-func (s *Server) shutdownJobTicker(_ context.Context) error {
-	s.logger.Info("shutting down job ticker...")
-	s.jobTicker.Stop()
-	s.jobTickerShutdown <- true
-	s.jobTickerShutdownWG.Wait()
-	return nil
+func (s *Server) shutdownJobTicker(ctx context.Context) error {
+	return s.jobTicker.Shutdown(ctx)
 }
-
-func (s *Server) runJobs() {
-	s.logger.Info("running jobs...")
-	ctx := context.Background()
-	for _, job := range s.jobs {
-		job(ctx)
-	}
-}
-
-type jobFunc func(ctx context.Context)
 
 func (s *Server) runtime() *serverRuntime {
 	return &serverRuntime{server: s}
