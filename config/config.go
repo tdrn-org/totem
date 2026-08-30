@@ -40,7 +40,7 @@ var defaultsData []byte
 
 func Default() (*Config, error) {
 	cfg := &Config{}
-	err := config.Defaults(defaultsData, cfg)
+	err := config.Defaults(cfg, defaultsData)
 	if err != nil {
 		return nil, err
 	}
