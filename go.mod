@@ -100,7 +100,7 @@ require (
 	github.com/adhocore/gronx v1.20.3 // indirect
 	github.com/alecthomas/kong v1.16.1
 	github.com/mattn/go-isatty v0.0.24 // indirect
-	github.com/modelcontextprotocol/go-sdk v1.7.0
+	github.com/modelcontextprotocol/go-sdk v1.8.0
 	github.com/sj14/jellyfin-go v0.4.4
 	github.com/stretchr/testify v1.12.1
 	github.com/swaggo/swag v1.16.6
