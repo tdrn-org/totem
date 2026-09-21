@@ -101,7 +101,7 @@ require (
 	github.com/alecthomas/kong v1.16.1
 	github.com/mattn/go-isatty v0.0.24 // indirect
 	github.com/modelcontextprotocol/go-sdk v1.8.0
-	github.com/sj14/jellyfin-go v0.4.4
+	github.com/sj14/jellyfin-go v0.5.0
 	github.com/stretchr/testify v1.12.1
 	github.com/swaggo/swag v1.16.6
 	github.com/tdrn-org/go-conf v0.0.8
