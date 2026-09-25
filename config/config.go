@@ -39,19 +39,9 @@ type Config struct {
 var defaultsData []byte
 
 func Default() (*Config, error) {
-	cfg := &Config{}
-	err := config.Defaults(cfg, defaultsData)
-	if err != nil {
-		return nil, err
-	}
-	return cfg, nil
+	return config.Defaults(&Config{}, defaultsData)
 }
 
 func Load(path string, strict bool) (*Config, error) {
-	cfg := &Config{}
-	err := config.Load(cfg, path, defaultsData, strict)
-	if err != nil {
-		return nil, err
-	}
-	return cfg, nil
+	return config.Load(&Config{}, path, defaultsData, strict)
 }

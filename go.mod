@@ -1,16 +1,32 @@
 module github.com/tdrn-org/totem
 
-go 1.26.7
+go 1.27.0
 
 require (
+	github.com/alecthomas/kong v1.16.1
 	github.com/mattermost/mattermost/server/public v0.4.4
+	github.com/modelcontextprotocol/go-sdk v1.8.0
 	github.com/rs/cors v1.11.1
+	github.com/sj14/jellyfin-go v0.4.4
+	github.com/stretchr/testify v1.12.1
+	github.com/swaggo/swag v1.16.6
+	github.com/tdrn-org/go-conf v0.0.8
+	github.com/tdrn-org/go-config-toml v0.1.0
+	github.com/tdrn-org/go-database v0.1.3
+	github.com/tdrn-org/go-diff v0.1.4
+	github.com/tdrn-org/go-httpserver v0.1.3
+	github.com/tdrn-org/go-hue v1.2.1
+	github.com/tdrn-org/go-jobticker v0.0.1
 	github.com/tdrn-org/go-log v0.6.1
+	github.com/tdrn-org/go-notify v0.0.6
+	github.com/tdrn-org/go-tlsconf v0.0.12
+	github.com/tdrn-org/go-tr064 v0.3.0
 )
 
 require (
 	github.com/KyleBanks/depth v1.2.1 // indirect
 	github.com/Masterminds/semver/v3 v3.5.0 // indirect
+	github.com/adhocore/gronx v1.20.4 // indirect
 	github.com/apapsch/go-jsonmerge/v2 v2.0.0 // indirect
 	github.com/brutella/dnssd v1.2.14 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
@@ -46,6 +62,7 @@ require (
 	github.com/mattermost/ldap v0.0.0-20231116144001-0f480c025956 // indirect
 	github.com/mattermost/logr/v2 v2.0.22 // indirect
 	github.com/mattn/go-colorable v0.1.15 // indirect
+	github.com/mattn/go-isatty v0.0.24 // indirect
 	github.com/miekg/dns v1.1.73 // indirect
 	github.com/ncruces/go-strftime v1.0.0 // indirect
 	github.com/oapi-codegen/runtime v1.7.0 // indirect
@@ -75,46 +92,26 @@ require (
 	go.opentelemetry.io/otel/trace v1.46.0 // indirect
 	go.yaml.in/yaml/v2 v2.4.4 // indirect
 	go.yaml.in/yaml/v3 v3.0.5 // indirect
-	golang.org/x/crypto v0.55.0 // indirect
-	golang.org/x/mod v0.40.0 // indirect
-	golang.org/x/net v0.58.0 // indirect
-	golang.org/x/oauth2 v0.36.0 // indirect
-	golang.org/x/sync v0.22.0 // indirect
-	golang.org/x/text v0.41.0 // indirect
-	golang.org/x/time v0.15.0 // indirect
-	golang.org/x/tools v0.49.0 // indirect
+	golang.org/x/crypto v0.57.0 // indirect
+	golang.org/x/mod v0.41.0 // indirect
+	golang.org/x/net v0.59.0 // indirect
+	golang.org/x/oauth2 v0.37.0 // indirect
+	golang.org/x/sync v0.23.0 // indirect
+	golang.org/x/sys v0.48.0 // indirect
+	golang.org/x/text v0.42.0 // indirect
+	golang.org/x/time v0.16.0 // indirect
+	golang.org/x/tools v0.50.0 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260825221802-da73d73af1c5 // indirect
-	google.golang.org/grpc v1.83.2 // indirect
+	google.golang.org/grpc v1.84.0 // indirect
 	google.golang.org/protobuf v1.36.12 // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1 // indirect
 	gopkg.in/validator.v2 v2.0.1 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
-	modernc.org/libc v1.75.6 // indirect
+	modernc.org/libc v1.77.1 // indirect
 	modernc.org/mathutil v1.7.1 // indirect
 	modernc.org/memory v1.12.1 // indirect
-	modernc.org/sqlite v1.57.0 // indirect
+	modernc.org/sqlite v1.59.0 // indirect
 	sigs.k8s.io/yaml v1.6.0 // indirect
-)
-
-require (
-	github.com/adhocore/gronx v1.20.3 // indirect
-	github.com/alecthomas/kong v1.16.1
-	github.com/mattn/go-isatty v0.0.24 // indirect
-	github.com/modelcontextprotocol/go-sdk v1.8.0
-	github.com/sj14/jellyfin-go v0.4.4
-	github.com/stretchr/testify v1.12.1
-	github.com/swaggo/swag v1.16.6
-	github.com/tdrn-org/go-conf v0.0.8
-	github.com/tdrn-org/go-config-toml v0.0.2
-	github.com/tdrn-org/go-database v0.1.3
-	github.com/tdrn-org/go-diff v0.1.4
-	github.com/tdrn-org/go-httpserver v0.1.3
-	github.com/tdrn-org/go-hue v1.2.1
-	github.com/tdrn-org/go-jobticker v0.0.1
-	github.com/tdrn-org/go-notify v0.0.6
-	github.com/tdrn-org/go-tlsconf v0.0.12
-	github.com/tdrn-org/go-tr064 v0.3.0
-	golang.org/x/sys v0.47.0 // indirect
 )
 
 tool github.com/swaggo/swag/cmd/swag
