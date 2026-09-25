@@ -12,9 +12,9 @@ require (
 	github.com/swaggo/swag v1.16.6
 	github.com/tdrn-org/go-conf v0.0.8
 	github.com/tdrn-org/go-config-toml v0.1.0
-	github.com/tdrn-org/go-database v0.1.3
+	github.com/tdrn-org/go-database v0.1.4
 	github.com/tdrn-org/go-diff v0.1.4
-	github.com/tdrn-org/go-httpserver v0.1.3
+	github.com/tdrn-org/go-httpserver v0.1.4
 	github.com/tdrn-org/go-hue v1.2.1
 	github.com/tdrn-org/go-jobticker v0.0.1
 	github.com/tdrn-org/go-log v0.6.1
@@ -31,7 +31,7 @@ require (
 	github.com/brutella/dnssd v1.2.14 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.7 // indirect
-	github.com/dustin/go-humanize v1.0.1 // indirect
+	github.com/dustin/go-humanize v1.1.0 // indirect
 	github.com/dyatlov/go-opengraph/opengraph v0.0.0-20220524092352-606d7b1e5f8a // indirect
 	github.com/fatih/color v1.19.0 // indirect
 	github.com/francoispqt/gojay v1.2.13 // indirect
