@@ -7,7 +7,7 @@ require (
 	github.com/mattermost/mattermost/server/public v0.4.4
 	github.com/modelcontextprotocol/go-sdk v1.8.0
 	github.com/rs/cors v1.11.1
-	github.com/sj14/jellyfin-go v0.4.4
+	github.com/sj14/jellyfin-go v0.5.0
 	github.com/stretchr/testify v1.12.1
 	github.com/swaggo/swag v1.16.6
 	github.com/tdrn-org/go-conf v0.0.8

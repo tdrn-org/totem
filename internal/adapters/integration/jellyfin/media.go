@@ -31,7 +31,7 @@ var includeAudio []jellyfinapi.BaseItemKind = []jellyfinapi.BaseItemKind{jellyfi
 var filterIsPlayed []jellyfinapi.ItemFilter = []jellyfinapi.ItemFilter{jellyfinapi.ITEMFILTER_IS_PLAYED}
 
 func (s *jellyfinService) ListPlaylists(ctx context.Context) ([]*media.PlaylistSummary, error) {
-	apiResponse, httpResponse, err := s.apiClient.ItemsAPI.
+	apiResponse, httpResponse, err := s.apiClient.LibraryAPI.
 		GetItems(ctx).
 		UserId(s.config.UserID()).
 		IncludeItemTypes(includePlaylists).
@@ -57,7 +57,7 @@ func (s *jellyfinService) ListPlaylists(ctx context.Context) ([]*media.PlaylistS
 }
 
 func (s *jellyfinService) GetPlaylist(ctx context.Context, id string) (*media.Playlist, error) {
-	apiResponse, httpResponse, err := s.apiClient.UserLibraryAPI.
+	apiResponse, httpResponse, err := s.apiClient.LibraryAPI.
 		GetItem(ctx, id).
 		UserId(s.config.UserID()).
 		Execute()
@@ -82,7 +82,7 @@ func (s *jellyfinService) GetPlaylist(ctx context.Context, id string) (*media.Pl
 }
 
 func (s *jellyfinService) getPlaylistItems(ctx context.Context, id string) ([]*media.MediaItem, error) {
-	apiResponse, httpResponse, err := s.apiClient.PlaylistsAPI.
+	apiResponse, httpResponse, err := s.apiClient.PlaylistAPI.
 		GetPlaylistItems(ctx, id).
 		UserId(s.config.UserID()).
 		Execute()
@@ -110,7 +110,7 @@ func (s *jellyfinService) getPlaylistItems(ctx context.Context, id string) ([]*m
 }
 
 func (s *jellyfinService) CreatePlaylist(ctx context.Context, name string, itemIDs []string) (*media.Playlist, error) {
-	apiResponse, httpResponse, err := s.apiClient.PlaylistsAPI.
+	apiResponse, httpResponse, err := s.apiClient.PlaylistAPI.
 		CreatePlaylist(ctx).
 		UserId(s.config.UserID()).
 		Name(name).
@@ -127,7 +127,7 @@ func (s *jellyfinService) CreatePlaylist(ctx context.Context, name string, itemI
 }
 
 func (s *jellyfinService) AddToPlaylist(ctx context.Context, playlistID string, itemIDs []string) (*media.Playlist, error) {
-	httpResponse, err := s.apiClient.PlaylistsAPI.
+	httpResponse, err := s.apiClient.PlaylistAPI.
 		AddItemToPlaylist(ctx, playlistID).
 		UserId(s.config.UserID()).
 		Ids(itemIDs).
@@ -142,7 +142,7 @@ func (s *jellyfinService) AddToPlaylist(ctx context.Context, playlistID string, 
 }
 
 func (s *jellyfinService) RemoveFromPlaylist(ctx context.Context, playlistID string, itemIDs []string) (*media.Playlist, error) {
-	httpResponse, err := s.apiClient.PlaylistsAPI.
+	httpResponse, err := s.apiClient.PlaylistAPI.
 		RemoveItemFromPlaylist(ctx, playlistID).
 		EntryIds(itemIDs).
 		Execute()
@@ -156,7 +156,7 @@ func (s *jellyfinService) RemoveFromPlaylist(ctx context.Context, playlistID str
 }
 
 func (s *jellyfinService) SearchItems(ctx context.Context, query string, genres []string, limit int) ([]*media.MediaItem, error) {
-	apiResponse, httpResponse, err := s.apiClient.ItemsAPI.
+	apiResponse, httpResponse, err := s.apiClient.LibraryAPI.
 		GetItems(ctx).
 		UserId(s.config.UserID()).
 		IncludeItemTypes(includeAudio).
@@ -189,7 +189,7 @@ func (s *jellyfinService) SearchItems(ctx context.Context, query string, genres 
 }
 
 func (s *jellyfinService) GetRecentlyPlayed(ctx context.Context, limit int) ([]*media.MediaItem, error) {
-	apiResponse, httpResponse, err := s.apiClient.ItemsAPI.
+	apiResponse, httpResponse, err := s.apiClient.LibraryAPI.
 		GetItems(ctx).
 		UserId(s.config.UserID()).
 		IncludeItemTypes(includeAudio).
