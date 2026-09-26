@@ -156,31 +156,40 @@ func (s *jellyfinService) RemoveFromPlaylist(ctx context.Context, playlistID str
 }
 
 func (s *jellyfinService) SearchItems(ctx context.Context, query string, genres []string, limit int) ([]*media.MediaItem, error) {
-	apiResponse, httpResponse, err := s.apiClient.LibraryAPI.
-		GetItems(ctx).
+	apiResponse, httpResponse, err := s.apiClient.SearchAPI.
+		GetSearchHints(ctx).
 		UserId(s.config.UserID()).
 		IncludeItemTypes(includeAudio).
-		Genres(genres).
+		IncludeArtists(true).
+		IncludeGenres(true).
 		SearchTerm(query).
-		Recursive(true).
 		Limit(int32(limit)).
 		Execute()
+	// apiResponse, httpResponse, err := s.apiClient.LibraryAPI.
+	// 	GetItems(ctx).
+	// 	UserId(s.config.UserID()).
+	// 	IncludeItemTypes(includeAudio).
+	// 	Genres(genres).
+	// 	SearchTerm(query).
+	// 	Recursive(true).
+	// 	Limit(int32(limit)).
+	// 	Execute()
 	if err != nil {
 		return nil, fmt.Errorf("failed request 'search items' via Jellyfin (cause: %w)", err)
 	}
 	if httpResponse.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("failed command 'search items' via Jellyfin (status: %s)", httpResponse.Status)
 	}
-	mediaItems := make([]*media.MediaItem, 0, len(apiResponse.Items))
-	for _, item := range apiResponse.Items {
+	mediaItems := make([]*media.MediaItem, 0, len(apiResponse.SearchHints))
+	for _, hint := range apiResponse.SearchHints {
 		mediaItem := &media.MediaItem{
-			ID:       *item.Id,
-			Name:     item.GetName(),
-			Type:     string(*item.Type),
-			Artists:  item.Artists,
-			Album:    *item.Album.Get(),
-			Duration: ticksToDuration(item.GetRunTimeTicks()),
-			Genres:   item.Genres,
+			ID:       *hint.Id,
+			Name:     hint.GetName(),
+			Type:     string(*hint.Type),
+			Artists:  hint.Artists,
+			Album:    *hint.Album.Get(),
+			Duration: ticksToDuration(hint.GetRunTimeTicks()),
+			// Genres:   hint.Genres,
 			// TODO: ImageURL: "",
 		}
 		mediaItems = append(mediaItems, mediaItem)
