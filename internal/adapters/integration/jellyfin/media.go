@@ -26,7 +26,7 @@ import (
 )
 
 var includePlaylists []jellyfinapi.BaseItemKind = []jellyfinapi.BaseItemKind{jellyfinapi.BASEITEMKIND_PLAYLIST}
-var includeAudio []jellyfinapi.BaseItemKind = []jellyfinapi.BaseItemKind{jellyfinapi.BASEITEMKIND_AUDIO}
+var includeAudio []jellyfinapi.BaseItemKind = []jellyfinapi.BaseItemKind{jellyfinapi.BASEITEMKIND_AUDIO, jellyfinapi.BASEITEMKIND_MUSIC_ALBUM, jellyfinapi.BASEITEMKIND_MUSIC_ARTIST}
 
 var filterIsPlayed []jellyfinapi.ItemFilter = []jellyfinapi.ItemFilter{jellyfinapi.ITEMFILTER_IS_PLAYED}
 
@@ -156,40 +156,32 @@ func (s *jellyfinService) RemoveFromPlaylist(ctx context.Context, playlistID str
 }
 
 func (s *jellyfinService) SearchItems(ctx context.Context, query string, genres []string, limit int) ([]*media.MediaItem, error) {
-	apiResponse, httpResponse, err := s.apiClient.SearchAPI.
-		GetSearchHints(ctx).
+	apiResponse, httpResponse, err := s.apiClient.LibraryAPI.
+		GetItems(ctx).
 		UserId(s.config.UserID()).
 		IncludeItemTypes(includeAudio).
-		IncludeArtists(true).
-		IncludeGenres(true).
+		Fields([]jellyfinapi.ItemFields{jellyfinapi.ITEMFIELDS_GENRES}).
+		Genres(genres).
 		SearchTerm(query).
+		Recursive(true).
 		Limit(int32(limit)).
 		Execute()
-	// apiResponse, httpResponse, err := s.apiClient.LibraryAPI.
-	// 	GetItems(ctx).
-	// 	UserId(s.config.UserID()).
-	// 	IncludeItemTypes(includeAudio).
-	// 	Genres(genres).
-	// 	SearchTerm(query).
-	// 	Recursive(true).
-	// 	Limit(int32(limit)).
-	// 	Execute()
 	if err != nil {
 		return nil, fmt.Errorf("failed request 'search items' via Jellyfin (cause: %w)", err)
 	}
 	if httpResponse.StatusCode != http.StatusOK {
 		return nil, fmt.Errorf("failed command 'search items' via Jellyfin (status: %s)", httpResponse.Status)
 	}
-	mediaItems := make([]*media.MediaItem, 0, len(apiResponse.SearchHints))
-	for _, hint := range apiResponse.SearchHints {
+	mediaItems := make([]*media.MediaItem, 0, len(apiResponse.Items))
+	for _, item := range apiResponse.Items {
 		mediaItem := &media.MediaItem{
-			ID:       *hint.Id,
-			Name:     hint.GetName(),
-			Type:     string(*hint.Type),
-			Artists:  hint.Artists,
-			Album:    *hint.Album.Get(),
-			Duration: ticksToDuration(hint.GetRunTimeTicks()),
-			// Genres:   hint.Genres,
+			ID:       *item.Id,
+			Name:     item.GetName(),
+			Type:     string(item.GetType()),
+			Artists:  item.GetArtists(),
+			Album:    item.GetAlbum(),
+			Duration: ticksToDuration(item.GetRunTimeTicks()),
+			Genres:   item.GetGenres(),
 			// TODO: ImageURL: "",
 		}
 		mediaItems = append(mediaItems, mediaItem)
