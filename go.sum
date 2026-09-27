@@ -282,8 +282,8 @@ github.com/tdrn-org/go-hue v1.2.1 h1:W5zo4WyiYGiD6AEay9iS9SsLytO4vu4rrHon/aOq5yY
 github.com/tdrn-org/go-hue v1.2.1/go.mod h1:KhMyLNNqDtprv4S3Z+Nl00ncek29zWnIPjsftQZBy5U=
 github.com/tdrn-org/go-jobticker v0.0.1 h1:ExRuEexod4U4lDXKU+ST3DxziwasoSy12EWccaG7jnE=
 github.com/tdrn-org/go-jobticker v0.0.1/go.mod h1:GLYbpDHE5bKb3dZWDlh/Mjxh4f8/Ez5QHlcych/7bUE=
-github.com/tdrn-org/go-log v0.6.1 h1:suJYTYrvlOSwKNhKtx0YOsW/5u58qvZr56owbN3sA2k=
-github.com/tdrn-org/go-log v0.6.1/go.mod h1:41vzwF1I2zk/4svHyXqTCbDqVF9kRXPsQKIYoyXBx2U=
+github.com/tdrn-org/go-log v0.6.2 h1:rcFJCRj0mE//iaNPEht0qbJEBX25LLiOYIgvEsRwMGc=
+github.com/tdrn-org/go-log v0.6.2/go.mod h1:2vA57ZTOPYyg2vfstTTP+uWIBd2qdK2SBK/PTtQ+5wk=
 github.com/tdrn-org/go-notify v0.0.6 h1:kx0I7epT87tchMJsaEuNvx2xbAjl+UX/Rux18YSntWc=
 github.com/tdrn-org/go-notify v0.0.6/go.mod h1:naQY/W+e/4x1DK/IblriNmSUfV2y8g1SLdIBDEa2gtQ=
 github.com/tdrn-org/go-tlsconf v0.0.12 h1:o2LayL47FtaNzM4QjgYnHnlAvOb373zOsUbA1QSR0os=
