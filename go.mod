@@ -13,7 +13,7 @@ require (
 	github.com/tdrn-org/go-conf v0.0.8
 	github.com/tdrn-org/go-config-toml v0.1.0
 	github.com/tdrn-org/go-database v0.1.4
-	github.com/tdrn-org/go-diff v0.1.4
+	github.com/tdrn-org/go-diff v0.1.5
 	github.com/tdrn-org/go-httpserver v0.1.4
 	github.com/tdrn-org/go-hue v1.2.1
 	github.com/tdrn-org/go-jobticker v0.0.1
