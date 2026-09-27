@@ -20,6 +20,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"strings"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
 	"github.com/tdrn-org/totem/internal/adapters/integration"
@@ -280,7 +281,7 @@ func formatMediaItemsText(items []*media.MediaItem) string {
 	for _, item := range items {
 		result += fmt.Sprintf("  %s — %s (%s) [%s]\n", item.Name, item.Artists, item.Duration, item.Type)
 		if len(item.Genres) > 0 {
-			result += fmt.Sprintf("    Genres: %v\n", item.Genres)
+			result += fmt.Sprintf("    Genres: %v\n", strings.Join(item.Genres, ", "))
 		}
 	}
 	return result

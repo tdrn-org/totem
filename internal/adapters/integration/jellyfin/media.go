@@ -26,7 +26,8 @@ import (
 )
 
 var includePlaylists []jellyfinapi.BaseItemKind = []jellyfinapi.BaseItemKind{jellyfinapi.BASEITEMKIND_PLAYLIST}
-var includeAudio []jellyfinapi.BaseItemKind = []jellyfinapi.BaseItemKind{jellyfinapi.BASEITEMKIND_AUDIO, jellyfinapi.BASEITEMKIND_MUSIC_ALBUM, jellyfinapi.BASEITEMKIND_MUSIC_ARTIST}
+var includeAudio []jellyfinapi.BaseItemKind = []jellyfinapi.BaseItemKind{jellyfinapi.BASEITEMKIND_AUDIO}
+var includeAudioAndRelated []jellyfinapi.BaseItemKind = []jellyfinapi.BaseItemKind{jellyfinapi.BASEITEMKIND_AUDIO, jellyfinapi.BASEITEMKIND_MUSIC_ALBUM, jellyfinapi.BASEITEMKIND_MUSIC_ARTIST}
 
 var filterIsPlayed []jellyfinapi.ItemFilter = []jellyfinapi.ItemFilter{jellyfinapi.ITEMFILTER_IS_PLAYED}
 
@@ -159,7 +160,7 @@ func (s *jellyfinService) SearchItems(ctx context.Context, query string, genres 
 	apiResponse, httpResponse, err := s.apiClient.LibraryAPI.
 		GetItems(ctx).
 		UserId(s.config.UserID()).
-		IncludeItemTypes(includeAudio).
+		IncludeItemTypes(includeAudioAndRelated).
 		Fields([]jellyfinapi.ItemFields{jellyfinapi.ITEMFIELDS_GENRES}).
 		Genres(genres).
 		SearchTerm(query).
