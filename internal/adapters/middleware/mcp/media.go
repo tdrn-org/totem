@@ -279,7 +279,17 @@ func formatMediaItemsText(items []*media.MediaItem) string {
 	}
 	result := fmt.Sprintf("%d items:\n", len(items))
 	for _, item := range items {
-		result += fmt.Sprintf("  %s — %s (%s) [%s]\n", item.Name, item.Artists, item.Duration, item.Type)
+		line := "  " + item.Name
+		if len(item.Artists) > 0 {
+			// Artists is empty for MusicArtist/MusicAlbum items — printing the
+			// slice directly yields a bare "[]".
+			line += " — " + strings.Join(item.Artists, ", ")
+		}
+		// Duration.String() carries fractional seconds (3m46.1234567s); for
+		// MusicArtist/MusicAlbum items it is the catalogue sum. Show m:ss.
+		secs := int(item.Duration.Seconds())
+		line += fmt.Sprintf(" (%d:%02d) [%s]\n", secs/60, secs%60, item.Type)
+		result += line
 		if len(item.Genres) > 0 {
 			result += fmt.Sprintf("    Genres: %v\n", strings.Join(item.Genres, ", "))
 		}

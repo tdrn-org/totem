@@ -209,14 +209,16 @@ func (s *jellyfinService) GetRecentlyPlayed(ctx context.Context, limit int) ([]*
 	}
 	mediaItems := make([]*media.MediaItem, 0, len(apiResponse.Items))
 	for _, item := range apiResponse.Items {
+		// The Get*() accessors are nil-safe; the raw fields (item.Type,
+		// item.Album.Get()) panic on entries that carry no metadata.
 		mediaItem := &media.MediaItem{
 			ID:       *item.Id,
 			Name:     item.GetName(),
-			Type:     string(*item.Type),
-			Artists:  item.Artists,
-			Album:    *item.Album.Get(),
+			Type:     string(item.GetType()),
+			Artists:  item.GetArtists(),
+			Album:    item.GetAlbum(),
 			Duration: ticksToDuration(item.GetRunTimeTicks()),
-			Genres:   item.Genres,
+			Genres:   item.GetGenres(),
 			// TODO: ImageURL: "",
 		}
 		mediaItems = append(mediaItems, mediaItem)
