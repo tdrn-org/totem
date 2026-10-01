@@ -31,10 +31,6 @@ func (s *Store) SavePulse(ctx context.Context, pulse *pulse.Pulse) error {
 	}
 	defer tx.RollbackUncommitedTx(txCtx)
 
-	err = model.DeletePulsesByAgent(txCtx, s.driver, pulse.Agent)
-	if err != nil {
-		return err
-	}
 	_, err = model.InsertPulse(txCtx, s.driver, pulse)
 	if err != nil {
 		return err

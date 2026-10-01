@@ -39,7 +39,6 @@ CREATE TABLE pulse(
     created_at INTEGER NOT NULL,
     PRIMARY KEY(id)
 );
-CREATE UNIQUE INDEX idx_pulse_agent ON pulse(agent);
 --
 -- EOF
 --
