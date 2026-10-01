@@ -29,7 +29,7 @@ func registerPulseTools(server *mcp.Server, runtime Runtime) {
 	// echo_pulse: schedule a self-addressed delayed notification
 	mcp.AddTool(server, &mcp.Tool{
 		Name:        "echo_pulse",
-		Description: "Schedules a self-addressed delayed notification. The message will be delivered to the agent's Mattermost DM at the specified time. At most one pending pulse exists per agent — creating a new one overwrites any existing pending pulse.",
+		Description: "Schedules a self-addressed delayed notification. The message will be delivered to the agent's Mattermost DM at the specified time. Any number of pending pulses may exist per agent — use echo_pulse_list to inspect them and echo_pulse_cancel to remove them.",
 		InputSchema: map[string]any{
 			"type": "object",
 			"properties": map[string]any{
@@ -62,8 +62,8 @@ func registerPulseTools(server *mcp.Server, runtime Runtime) {
 		if err := runtime.DataStore().SavePulse(ctx, p); err != nil {
 			return nil, nil, fmt.Errorf("saving pulse: %w", err)
 		}
-		text := fmt.Sprintf("Pulse scheduled for %s (in %s). Message: %q",
-			p.ScheduledAt.Format(time.RFC3339), duration, input.Message)
+		text := fmt.Sprintf("Pulse %s scheduled for %s (in %s). Message: %q",
+			p.ID, p.ScheduledAt.Format(time.RFC3339), duration, input.Message)
 		return &mcp.CallToolResult{
 			Content: []mcp.Content{&mcp.TextContent{Text: text}},
 		}, map[string]any{"pulse": p}, nil
@@ -92,7 +92,7 @@ func registerPulseTools(server *mcp.Server, runtime Runtime) {
 		}
 		if len(pulses) == 0 {
 			return &mcp.CallToolResult{
-				Content: []mcp.Content{&mcp.TextContent{Text: fmt.Sprintf("No pending pulse for agent %q.", agent)}},
+				Content: []mcp.Content{&mcp.TextContent{Text: fmt.Sprintf("No pending pulses for agent %q.", agent)}},
 			}, nil, nil
 		}
 		text := fmt.Sprintf("Found %d pulse(s) for agent %q:\n", len(pulses), agent)
@@ -105,18 +105,20 @@ func registerPulseTools(server *mcp.Server, runtime Runtime) {
 		}, map[string]any{"pulses": pulses}, nil
 	})
 
-	// echo_pulse_cancel: cancel the pending pulse
+	// echo_pulse_cancel: cancel one or all pending pulses of an agent
 	mcp.AddTool(server, &mcp.Tool{
 		Name:        "echo_pulse_cancel",
-		Description: "Cancels the pending echo pulse for an agent, if one exists.",
+		Description: "Cancels pending echo pulses for an agent. Pass id to cancel a single pulse; omit id to cancel all pending pulses of the agent. The response lists every cancelled pulse.",
 		InputSchema: map[string]any{
 			"type": "object",
 			"properties": map[string]any{
-				"agent": map[string]any{"type": "string", "description": "The agent whose pulse to cancel (default: 'judy')."},
+				"agent": map[string]any{"type": "string", "description": "The agent whose pulses to cancel (default: 'judy')."},
+				"id":    map[string]any{"type": "string", "description": "ID of a single pulse to cancel (see echo_pulse_list). Omit to cancel all pending pulses of the agent."},
 			},
 		},
 	}, func(ctx context.Context, _ *mcp.CallToolRequest, input struct {
 		Agent string `json:"agent"`
+		ID    string `json:"id"`
 	}) (*mcp.CallToolResult, any, error) {
 		agent := input.Agent
 		if agent == "" {
@@ -128,17 +130,40 @@ func registerPulseTools(server *mcp.Server, runtime Runtime) {
 		}
 		if len(pulses) == 0 {
 			return &mcp.CallToolResult{
-				Content: []mcp.Content{&mcp.TextContent{Text: fmt.Sprintf("No pending pulse for agent %q.", agent)}},
+				Content: []mcp.Content{&mcp.TextContent{Text: fmt.Sprintf("No pending pulses for agent %q.", agent)}},
 			}, nil, nil
 		}
-		for _, p := range pulses {
+		cancelled := pulses
+		if input.ID != "" {
+			cancelled = nil
+			for _, p := range pulses {
+				if p.ID == input.ID {
+					cancelled = []*pulse.Pulse{p}
+					break
+				}
+			}
+			if cancelled == nil {
+				return nil, nil, fmt.Errorf("no pending pulse with ID %q for agent %q", input.ID, agent)
+			}
+		}
+		for _, p := range cancelled {
 			if err := runtime.DataStore().DeletePulse(ctx, p.ID); err != nil {
 				return nil, nil, fmt.Errorf("deleting pulse %q: %w", p.ID, err)
 			}
 		}
-		text := fmt.Sprintf("Cancelled %d pulse(s) for agent %q.", len(pulses), agent)
 		return &mcp.CallToolResult{
-			Content: []mcp.Content{&mcp.TextContent{Text: text}},
-		}, nil, nil
+			Content: []mcp.Content{&mcp.TextContent{Text: formatCancelledPulsesText(agent, cancelled)}},
+		}, map[string]any{"cancelled": cancelled}, nil
 	})
+}
+
+// formatCancelledPulsesText names every pulse removed by echo_pulse_cancel,
+// so a bulk cancellation is visible instead of implicit.
+func formatCancelledPulsesText(agent string, cancelled []*pulse.Pulse) string {
+	text := fmt.Sprintf("Cancelled %d pulse(s) for agent %q:", len(cancelled), agent)
+	for _, p := range cancelled {
+		text += fmt.Sprintf("\n  ID: %s\n    Scheduled: %s\n    Message: %q",
+			p.ID, p.ScheduledAt.Format(time.RFC3339), p.Message)
+	}
+	return text
 }

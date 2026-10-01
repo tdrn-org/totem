@@ -17,8 +17,8 @@
 // Package pulse defines the domain types and interfaces for Judy's
 // echo_pulse feature — self-addressed delayed notifications.
 //
-// At most one pending pulse exists per agent at any time. Creating a
-// new pulse overwrites any existing pending pulse for that agent.
+// Any number of pending pulses may exist per agent. A pulse is removed
+// once it has been delivered, so the store holds pending pulses only.
 package pulse
 
 import (
@@ -39,16 +39,18 @@ type Pulse struct {
 // Store defines the persistence interface for echo pulses. Fired pulses
 // are deleted after delivery — no status, no housekeeping.
 type Store interface {
-	// SavePulse stores a new pending pulse for the given agent. If a
-	// pending pulse already exists for the agent, it is silently overwritten.
+	// SavePulse stores a new pending pulse for the given agent. Any
+	// number of pending pulses may exist per agent.
 	SavePulse(ctx context.Context, pulse *Pulse) error
 
-	// ListAgentPulses returns all saved pulses for an agent (pending + history).
+	// ListAgentPulses returns all pending pulses for an agent, ordered
+	// by scheduled time.
 	ListAgentPulses(ctx context.Context, agent string) ([]*Pulse, error)
 
-	// ListPulses returns all pulses.
+	// ListPulses returns all pulses, ordered by scheduled time.
 	ListPulses(ctx context.Context) ([]*Pulse, error)
 
-	// DeletePulse removes a pulse by ID.
+	// DeletePulse removes a pulse by ID. This is the standard way to
+	// cancel a pulse; the ID is obtained from ListAgentPulses.
 	DeletePulse(ctx context.Context, id string) error
 }
