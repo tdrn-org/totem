@@ -73,11 +73,7 @@ type runCmd struct {
 }
 
 func (cmd *runCmd) Run(ctx context.Context, args *cmdLine) error {
-	path := strings.TrimSpace(cmd.Config)
-	if path == "" {
-		path = config.DefaultPath()
-	}
-	config, err := config.Load(path, false)
+	config, err := loadConfig(cmd.Config)
 	if err != nil {
 		return err
 	}
@@ -167,21 +163,28 @@ func (cmd *templateCmd) Run(_ context.Context, args *cmdLine) error {
 
 type notifyCmd struct {
 	Config  string `short:"c" help:"The configuration file to use" default:"${config_default}"`
-	Message string `short:"m" help:"The name of the message to send (as defined in configuration)"`
+	Message string `short:"m" required:"" help:"The name of the message to send (as defined in configuration)"`
 }
 
 func (cmd *notifyCmd) Run(ctx context.Context, args *cmdLine) error {
-	path := strings.TrimSpace(cmd.Config)
-	if path == "" {
-		path = config.DefaultPath()
-	}
-	config, err := config.Load(path, false)
+	config, err := loadConfig(cmd.Config)
 	if err != nil {
 		return err
 	}
 	applyGlobalArgs(config, args)
 	applyLoggingConfig(&config.Logging)
 	return Notify(ctx, config, cmd.Message)
+}
+
+func loadConfig(path string) (*config.Config, error) {
+	if path == "" {
+		path = config.DefaultPath()
+	}
+	config, err := config.Load(path, false)
+	if err != nil {
+		return nil, err
+	}
+	return config, nil
 }
 
 func applyGlobalArgs(c *config.Config, args *cmdLine) {
