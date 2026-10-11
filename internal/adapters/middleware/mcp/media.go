@@ -75,7 +75,7 @@ func registerMediaAPI(server *mcp.Server, services []media.MediaService, logger 
 			if err != nil {
 				continue
 			}
-			text := fmt.Sprintf("Playlist '%s': %d items, %s total",
+			text := fmt.Sprintf("Playlist %q: %d items, %s total",
 				playlist.Name, playlist.ItemCount, playlist.Duration)
 			if len(playlist.Items) > 0 {
 				text += "\n\nTracks:"
@@ -87,7 +87,7 @@ func registerMediaAPI(server *mcp.Server, services []media.MediaService, logger 
 				Content: []mcp.Content{&mcp.TextContent{Text: text}},
 			}, map[string]any{"playlist": playlist}, nil
 		}
-		return nil, nil, fmt.Errorf("playlist '%s' not found on any service", input.ID)
+		return nil, nil, fmt.Errorf("playlist %q not found on any service", input.ID)
 	})
 
 	// addToPlaylist: try each service until found
@@ -111,7 +111,7 @@ func registerMediaAPI(server *mcp.Server, services []media.MediaService, logger 
 			if err != nil {
 				continue
 			}
-			text := fmt.Sprintf("Added %d item(s) to playlist '%s'.\nNew total: %d items, %s",
+			text := fmt.Sprintf("Added %d item(s) to playlist %q.\nNew total: %d items, %s",
 				len(input.ItemIDs), playlist.Name, playlist.ItemCount, playlist.Duration)
 			if len(playlist.Items) > 0 {
 				text += "\n\nTracks:"
@@ -123,7 +123,7 @@ func registerMediaAPI(server *mcp.Server, services []media.MediaService, logger 
 				Content: []mcp.Content{&mcp.TextContent{Text: text}},
 			}, map[string]any{"playlist": playlist}, nil
 		}
-		return nil, nil, fmt.Errorf("playlist '%s' not found on any service", input.PlaylistID)
+		return nil, nil, fmt.Errorf("playlist %q not found on any service", input.PlaylistID)
 	})
 
 	// createPlaylist: try each service until created (requires at least one initial item)
@@ -147,7 +147,7 @@ func registerMediaAPI(server *mcp.Server, services []media.MediaService, logger 
 			if err != nil {
 				continue
 			}
-			text := fmt.Sprintf("Created playlist '%s' with %d item(s).\nDuration: %s",
+			text := fmt.Sprintf("Created playlist %q with %d item(s).\nDuration: %s",
 				playlist.Name, playlist.ItemCount, playlist.Duration)
 			if len(playlist.Items) > 0 {
 				text += "\n\nTracks:"
@@ -159,7 +159,7 @@ func registerMediaAPI(server *mcp.Server, services []media.MediaService, logger 
 				Content: []mcp.Content{&mcp.TextContent{Text: text}},
 			}, map[string]any{"playlist": playlist}, nil
 		}
-		return nil, nil, fmt.Errorf("failed to create playlist '%s' on any service", input.Name)
+		return nil, nil, fmt.Errorf("failed to create playlist %q on any service", input.Name)
 	})
 
 	// removeFromPlaylist: try each service until found
@@ -183,7 +183,7 @@ func registerMediaAPI(server *mcp.Server, services []media.MediaService, logger 
 			if err != nil {
 				continue
 			}
-			text := fmt.Sprintf("Removed %d item(s) from playlist '%s'.\nNew total: %d items, %s",
+			text := fmt.Sprintf("Removed %d item(s) from playlist %q.\nNew total: %d items, %s",
 				len(input.ItemIDs), playlist.Name, playlist.ItemCount, playlist.Duration)
 			if len(playlist.Items) > 0 {
 				text += "\n\nTracks:"
@@ -195,7 +195,7 @@ func registerMediaAPI(server *mcp.Server, services []media.MediaService, logger 
 				Content: []mcp.Content{&mcp.TextContent{Text: text}},
 			}, map[string]any{"playlist": playlist}, nil
 		}
-		return nil, nil, fmt.Errorf("playlist '%s' not found on any service", input.PlaylistID)
+		return nil, nil, fmt.Errorf("playlist %q not found on any service", input.PlaylistID)
 	})
 
 	// searchMedia: try each service until results found
@@ -229,7 +229,7 @@ func registerMediaAPI(server *mcp.Server, services []media.MediaService, logger 
 				Content: []mcp.Content{&mcp.TextContent{Text: text}},
 			}, map[string]any{"items": items}, nil
 		}
-		return nil, nil, fmt.Errorf("no results found for '%s'", input.Query)
+		return nil, nil, fmt.Errorf("no results found for %q", input.Query)
 	})
 
 	// getRecentlyPlayed: try each service until results found

@@ -42,7 +42,7 @@ func Register(host integration.Host, config Config) (integration.Service, error)
 	address := config.Address()
 	bridgeLocator, err := hue.NewAddressBridgeLocator(address)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create bridge locator for address '%s' (cause: %w)", config.Address(), err)
+		return nil, fmt.Errorf("failed to create bridge locator for address %q (cause: %w)", config.Address(), err)
 	}
 	bridgeAuthenticator := hue.NewLocalBridgeAuthenticator(config.Login())
 	serviceID := integration.NewServiceID(Name, address)
@@ -107,11 +107,11 @@ func (s *huebridgeService) resolveBridgeClient() (hue.BridgeClient, error) {
 	timeout := s.config.Timeout()
 	bridge, err := s.bridgeLocator.Lookup(bridgeID, timeout)
 	if err != nil {
-		return nil, fmt.Errorf("failed to lookup Hue Bridge '%s' (cause: %w)", bridgeID, err)
+		return nil, fmt.Errorf("failed to lookup Hue Bridge %q (cause: %w)", bridgeID, err)
 	}
 	bridgeClient, err := bridge.NewClient(s.bridgeAuthenticator, timeout)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create Hue Bridge client '%s' (cause: %w)", bridgeID, err)
+		return nil, fmt.Errorf("failed to create Hue Bridge client %q (cause: %w)", bridgeID, err)
 	}
 	s.cachedBridgeClient = bridgeClient
 	return s.cachedBridgeClient, nil

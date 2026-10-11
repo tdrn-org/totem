@@ -138,7 +138,7 @@ func (cmd *templateCmd) Run(_ context.Context, args *cmdLine) error {
 	} else {
 		diffFile, err := os.Open(cmd.Diff)
 		if err != nil {
-			return fmt.Errorf("unable to open file '%s' (cause: %w)", cmd.Diff, err)
+			return fmt.Errorf("unable to open file %q (cause: %w)", cmd.Diff, err)
 		}
 		defer diffFile.Close()
 		diffResult, err := diff.Diff(strings.NewReader(configTemplate), diffFile)

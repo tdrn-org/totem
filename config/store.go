@@ -62,7 +62,7 @@ func (t *DatabaseType) UnmarshalTOML(value any) error {
 	}
 	databaseType, ok := knownDatabaseTypes[databaseTypeString]
 	if !ok {
-		return fmt.Errorf("unknown database type: '%s'", databaseTypeString)
+		return fmt.Errorf("unknown database type: %q", databaseTypeString)
 	}
 	*t = databaseType
 	return nil

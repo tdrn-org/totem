@@ -75,11 +75,11 @@ func (c *mattermostConfig) ResolveChannelID(ctx context.Context, client *model.C
 	}
 	agent, _, err := client.GetUserByUsername(ctx, params.GetAgent(), "")
 	if err != nil {
-		return "", fmt.Errorf("failed to retrieve Agent '%s' (cause: %w)", params.GetAgent(), err)
+		return "", fmt.Errorf("failed to retrieve Agent %q (cause: %w)", params.GetAgent(), err)
 	}
 	channel, _, err := client.CreateDirectChannel(ctx, user.Id, agent.Id)
 	if err != nil {
-		return "", fmt.Errorf("failed to create direct channel to Agent '%s' (cause: %w)", params.GetAgent(), err)
+		return "", fmt.Errorf("failed to create direct channel to Agent %q (cause: %w)", params.GetAgent(), err)
 	}
 	return channel.Id, nil
 }

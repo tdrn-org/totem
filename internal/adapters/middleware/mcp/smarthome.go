@@ -99,7 +99,7 @@ func registerSmarthomeAPI(server *mcp.Server, services []smarthome.SmarthomeServ
 			if err != nil {
 				continue
 			}
-			text := fmt.Sprintf("Light '%s' (%s): %s, brightness %d%%",
+			text := fmt.Sprintf("Light %q (%s): %s, brightness %d%%",
 				light.Name, light.ID, onOffText(light.On), light.Brightness)
 			if light.Location != nil {
 				text += fmt.Sprintf("\nLocation: %s (%s)", light.Location.Name, light.Location.Address)
@@ -108,7 +108,7 @@ func registerSmarthomeAPI(server *mcp.Server, services []smarthome.SmarthomeServ
 				Content: []mcp.Content{&mcp.TextContent{Text: text}},
 			}, map[string]any{"light": light}, nil
 		}
-		return nil, nil, fmt.Errorf("light '%s' not found on any service", input.ID)
+		return nil, nil, fmt.Errorf("light %q not found on any service", input.ID)
 	})
 
 	// setLight: try each service until found
@@ -134,13 +134,13 @@ func registerSmarthomeAPI(server *mcp.Server, services []smarthome.SmarthomeServ
 			if err != nil {
 				continue
 			}
-			text := fmt.Sprintf("Light '%s': %s, brightness %d%%",
+			text := fmt.Sprintf("Light %q: %s, brightness %d%%",
 				light.Name, onOffText(light.On), light.Brightness)
 			return &mcp.CallToolResult{
 				Content: []mcp.Content{&mcp.TextContent{Text: text}},
 			}, map[string]any{"light": light}, nil
 		}
-		return nil, nil, fmt.Errorf("light '%s' not found on any service", input.ID)
+		return nil, nil, fmt.Errorf("light %q not found on any service", input.ID)
 	})
 
 	// listTemperatureSensors: aggregate across all services, optionally filtered by location
@@ -191,7 +191,7 @@ func registerSmarthomeAPI(server *mcp.Server, services []smarthome.SmarthomeServ
 			if err != nil {
 				continue
 			}
-			text := fmt.Sprintf("Temperature sensor '%s' (%s): type=%s, %.1f°C",
+			text := fmt.Sprintf("Temperature sensor %q (%s): type=%s, %.1f°C",
 				sensor.Name, sensor.ID, sensor.Type, sensor.Temperature)
 			if sensor.Location != nil {
 				text += fmt.Sprintf("\nLocation: %s (%s)", sensor.Location.Name, sensor.Location.Address)
@@ -200,7 +200,7 @@ func registerSmarthomeAPI(server *mcp.Server, services []smarthome.SmarthomeServ
 				Content: []mcp.Content{&mcp.TextContent{Text: text}},
 			}, map[string]any{"temperatureSensor": sensor}, nil
 		}
-		return nil, nil, fmt.Errorf("temperature sensor '%s' not found on any service", input.ID)
+		return nil, nil, fmt.Errorf("temperature sensor %q not found on any service", input.ID)
 	})
 
 	// listBatteryDevices: aggregate across all services, optionally filtered by location
@@ -251,7 +251,7 @@ func registerSmarthomeAPI(server *mcp.Server, services []smarthome.SmarthomeServ
 			if err != nil {
 				continue
 			}
-			text := fmt.Sprintf("Battery device '%s' (%s): type=%s, 🔋%d%%",
+			text := fmt.Sprintf("Battery device %q (%s): type=%s, 🔋%d%%",
 				device.Name, device.ID, device.Type, device.BatteryLevel)
 			if device.Location != nil {
 				text += fmt.Sprintf("\nLocation: %s (%s)", device.Location.Name, device.Location.Address)
@@ -260,7 +260,7 @@ func registerSmarthomeAPI(server *mcp.Server, services []smarthome.SmarthomeServ
 				Content: []mcp.Content{&mcp.TextContent{Text: text}},
 			}, map[string]any{"batteryDevice": device}, nil
 		}
-		return nil, nil, fmt.Errorf("battery device '%s' not found on any service", input.ID)
+		return nil, nil, fmt.Errorf("battery device %q not found on any service", input.ID)
 	})
 
 	// listMotionSensors: aggregate across all services, optionally filtered by location
@@ -315,7 +315,7 @@ func registerSmarthomeAPI(server *mcp.Server, services []smarthome.SmarthomeServ
 			if sensor.Motion {
 				motionText = "detected 🏃"
 			}
-			text := fmt.Sprintf("Motion sensor '%s' (%s): motion=%s",
+			text := fmt.Sprintf("Motion sensor %q (%s): motion=%s",
 				sensor.Name, sensor.ID, motionText)
 			if sensor.Location != nil {
 				text += fmt.Sprintf("\nLocation: %s (%s)", sensor.Location.Name, sensor.Location.Address)
@@ -324,7 +324,7 @@ func registerSmarthomeAPI(server *mcp.Server, services []smarthome.SmarthomeServ
 				Content: []mcp.Content{&mcp.TextContent{Text: text}},
 			}, map[string]any{"motionSensor": sensor}, nil
 		}
-		return nil, nil, fmt.Errorf("motion sensor '%s' not found on any service", input.ID)
+		return nil, nil, fmt.Errorf("motion sensor %q not found on any service", input.ID)
 	})
 }
 

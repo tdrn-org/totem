@@ -120,7 +120,7 @@ func (s *Store) model2User(storeUser *model.User) (*domain.User, error) {
 func (s *Store) model2UserDevice(storeDevice *model.UserDevice) (*domain.UserDevice, error) {
 	deviceMAC, err := net.ParseMAC(storeDevice.MAC)
 	if err != nil {
-		return nil, fmt.Errorf("invalid MAC '%s' (cause: %w)", storeDevice.MAC, err)
+		return nil, fmt.Errorf("invalid MAC %q (cause: %w)", storeDevice.MAC, err)
 	}
 	device := &domain.UserDevice{
 		MAC:  deviceMAC,

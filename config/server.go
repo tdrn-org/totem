@@ -69,7 +69,7 @@ func (p *ServerProtocol) UnmarshalTOML(value any) error {
 	}
 	protocol, ok := knownServerProtocols[protocolString]
 	if !ok {
-		return fmt.Errorf("unknown log target: '%s'", protocolString)
+		return fmt.Errorf("unknown log target: %q", protocolString)
 	}
 	*p = protocol
 	return nil

@@ -205,7 +205,7 @@ func (s *huebridgeService) GetBatteryDevice(ctx context.Context, id string) (*sm
 	}
 	dp := response.JSON200.Data[0]
 	if dp.PowerState.BatteryLevel == nil {
-		return nil, fmt.Errorf("device '%s' is not battery-powered", id)
+		return nil, fmt.Errorf("device %q is not battery-powered", id)
 	}
 	return &smarthome.BatteryDevice{
 		ID:           dp.Owner.Rid,

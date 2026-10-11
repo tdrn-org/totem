@@ -47,10 +47,10 @@ func registerPresenceTools(server *mcp.Server, runtime Runtime) {
 	}) (*mcp.CallToolResult, any, error) {
 		user, err := runtime.DataStore().GetUser(ctx, input.UserID)
 		if err != nil {
-			return nil, nil, fmt.Errorf("failed to get user '%s': %w", input.UserID, err)
+			return nil, nil, fmt.Errorf("failed to get user %q: %w", input.UserID, err)
 		}
 		if user == nil {
-			return nil, nil, fmt.Errorf("user '%s' not found", input.UserID)
+			return nil, nil, fmt.Errorf("user %q not found", input.UserID)
 		}
 		presence, err := presenceTracker.CheckUser(ctx, user)
 		if err != nil {
@@ -94,20 +94,20 @@ func formatUserPresenceText(user *domain.User, p *presence.UserPresence) string 
 		lastSeen = p.LastSeen.Format("2006-01-02 15:04:05")
 	}
 	if p.Location != nil {
-		return fmt.Sprintf("User '%s' is at '%s' (%s).\nLast seen: %s at '%s'.",
+		return fmt.Sprintf("User %q is at %q (%s).\nLast seen: %s at %q.",
 			user.Name, p.Location.Name, p.Location.Address,
 			lastSeen, p.Location.Name)
 	}
 	if p.LastSeenLocation != nil {
-		return fmt.Sprintf("User '%s' is not currently present at any known location.\nLast seen: %s at '%s' (%s).",
+		return fmt.Sprintf("User %q is not currently present at any known location.\nLast seen: %s at %q (%s).",
 			user.Name, lastSeen,
 			p.LastSeenLocation.Name, p.LastSeenLocation.Address)
 	}
-	return fmt.Sprintf("User '%s' has never been seen at any known location.", user.Name)
+	return fmt.Sprintf("User %q has never been seen at any known location.", user.Name)
 }
 
 func formatPresenceResultText(location *domain.Location, result *presence.PresenceResult) string {
-	text := fmt.Sprintf("Location '%s' (%s):\n", location.Name, location.Address)
+	text := fmt.Sprintf("Location %q (%s):\n", location.Name, location.Address)
 	if len(result.Users) == 0 {
 		text += "  No users present.\n"
 	} else {

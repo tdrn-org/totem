@@ -132,10 +132,10 @@ func (s *Server) Ping(ctx context.Context) error {
 	pingURL := s.httpServer.BaseURL().JoinPath(rest.PathPing).String()
 	rsp, err := client.Get(pingURL)
 	if err != nil {
-		return fmt.Errorf("failed to access URL: '%s' (cause: %w)", pingURL, err)
+		return fmt.Errorf("failed to access URL: %q (cause: %w)", pingURL, err)
 	}
 	if rsp.StatusCode != http.StatusOK {
-		return fmt.Errorf("failed to ping URL: '%s' (status: %s)", pingURL, rsp.Status)
+		return fmt.Errorf("failed to ping URL: %q (status: %s)", pingURL, rsp.Status)
 	}
 	return nil
 }
@@ -149,7 +149,7 @@ func (s *Server) startStore(ctx context.Context, cfg *config.Config) error {
 	case config.DatabaseType(sqlite.Type):
 		databaseConfig = sqlite.NewConfig(cfg.Store.SQLiteConfig.File, sqlite.ModeRWC, model.SqliteSchemaScriptOption)
 	default:
-		return fmt.Errorf("unrecognized store type '%s'", cfg.Store.DatabaseType)
+		return fmt.Errorf("unrecognized store type %q", cfg.Store.DatabaseType)
 	}
 	driver, err := database.Open(databaseConfig)
 	if err != nil {
