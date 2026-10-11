@@ -45,6 +45,10 @@ agent = "agent1"
 schedule = "5 * * * *"
 notification = "Hello {{.Agent}}, check for new emails."
 
+[notify.message.alert]
+agent = "agent1"
+message = "Hello {{.Agent}}, there is an alert."
+
 [[location]]
 id = "home1"
 name = "Home 1"

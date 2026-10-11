@@ -21,13 +21,14 @@ import (
 )
 
 type NotifyConfig struct {
-	MattermostURL         string                 `toml:"mattermost_url"`
-	MattermostToken       string                 `toml:"mattermost_token"`
-	ArrivalNotification   string                 `toml:"arrival_notification"`
-	DepartureNotification string                 `toml:"departure_notification"`
-	PulseNotification     string                 `toml:"pulse_notification"`
-	Profiles              []NotifyProfileConfig  `toml:"profile"`
-	Schedules             []NotifyScheduleConfig `toml:"schedule"`
+	MattermostURL         string                         `toml:"mattermost_url"`
+	MattermostToken       string                         `toml:"mattermost_token"`
+	ArrivalNotification   string                         `toml:"arrival_notification"`
+	DepartureNotification string                         `toml:"departure_notification"`
+	PulseNotification     string                         `toml:"pulse_notification"`
+	Profiles              []NotifyProfileConfig          `toml:"profile"`
+	Schedules             []NotifyScheduleConfig         `toml:"schedule"`
+	Messages              map[string]NotifyMessageConfig `toml:"message"`
 }
 
 type NotifyProfileConfig struct {
@@ -39,4 +40,9 @@ type NotifyScheduleConfig struct {
 	Agent        string                 `toml:"agent"`
 	Schedule     jobticker.ScheduleSpec `toml:"schedule"`
 	Notification string                 `toml:"notification"`
+}
+
+type NotifyMessageConfig struct {
+	Agent   string `toml:"agent"`
+	Message string `toml:"message"`
 }

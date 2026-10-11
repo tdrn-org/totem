@@ -21,6 +21,7 @@ import (
 	"fmt"
 
 	"github.com/mattermost/mattermost/server/public/model"
+	"github.com/tdrn-org/go-notify/mattermost"
 	"github.com/tdrn-org/totem/config"
 )
 
@@ -38,20 +39,20 @@ func (p *mattermostTransitionParams) GetAgent() string {
 	return p.Agent
 }
 
-type mattermostScheduleParams struct {
+type mattermostAgentParams struct {
 	Agent string
 }
 
-func (p *mattermostScheduleParams) GetAgent() string {
+func (p *mattermostAgentParams) GetAgent() string {
 	return p.Agent
 }
 
-type mattermostPulseParams struct {
+type mattermostMessageParams struct {
 	Agent   string
 	Message string
 }
 
-func (p *mattermostPulseParams) GetAgent() string {
+func (p *mattermostMessageParams) GetAgent() string {
 	return p.Agent
 }
 
@@ -81,4 +82,15 @@ func (c *mattermostConfig) ResolveChannelID(ctx context.Context, client *model.C
 		return "", fmt.Errorf("failed to create direct channel to Agent '%s' (cause: %w)", params.GetAgent(), err)
 	}
 	return channel.Id, nil
+}
+
+func newPayloadFactory(cfg *config.NotifyConfig) (*mattermost.PayloadFactory[mattermostParams], error) {
+	config := &mattermostConfig{
+		cfg: cfg,
+	}
+	mattermostPayloads, err := mattermost.NewPayloadFactory(config)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create Mattermost payload factory (cause: %w)", err)
+	}
+	return mattermostPayloads, nil
 }

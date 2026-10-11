@@ -18,7 +18,6 @@ package notification
 
 import (
 	"context"
-	"fmt"
 	"log/slog"
 	"time"
 
@@ -40,12 +39,9 @@ type Service struct {
 }
 
 func NewService(runtime Runtime, cfg *config.NotifyConfig) (*Service, error) {
-	config := &mattermostConfig{
-		cfg: cfg,
-	}
-	mattermostPayloads, err := mattermost.NewPayloadFactory(config)
+	mattermostPayloads, err := newPayloadFactory(cfg)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create Mattermost payload factory (cause: %w)", err)
+		return nil, err
 	}
 	service := &Service{
 		runtime:            runtime,
@@ -81,7 +77,7 @@ func (s *Service) NotifyTransition(ctx context.Context, log *data.UserPresenceLo
 func (s *Service) NotifySchedules(ctx context.Context, last, now time.Time) error {
 	for _, schedule := range s.cfg.Schedules {
 		if schedule.Schedule.InInterval(last, now) {
-			params := &mattermostScheduleParams{
+			params := &mattermostAgentParams{
 				Agent: schedule.Agent,
 			}
 			payload := s.mattermostPayloads.NewPayload(schedule.Notification)
@@ -96,7 +92,7 @@ func (s *Service) NotifySchedules(ctx context.Context, last, now time.Time) erro
 
 func (s *Service) PostPulse(ctx context.Context, pulse *pulse.Pulse) {
 	payload := s.mattermostPayloads.NewPayload(s.cfg.PulseNotification)
-	params := &mattermostPulseParams{
+	params := &mattermostMessageParams{
 		Agent:   pulse.Agent,
 		Message: pulse.Message,
 	}

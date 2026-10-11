@@ -64,6 +64,7 @@ type cmdLine struct {
 	RunCmd      runCmd      `cmd:"" name:"run" default:"withargs" help:"Run server"`
 	VersionCmd  versionCmd  `cmd:"" name:"version" help:"Show version info"`
 	TemplateCmd templateCmd `cmd:"" name:"template" help:"Output config template"`
+	NotifyCmd   notifyCmd   `cmd:"" name:"notify" help:"Send notification to agent"`
 }
 
 type runCmd struct {
@@ -80,7 +81,7 @@ func (cmd *runCmd) Run(ctx context.Context, args *cmdLine) error {
 	if err != nil {
 		return err
 	}
-	cmd.applyGlobalArgs(config, args)
+	applyGlobalArgs(config, args)
 	applyLoggingConfig(&config.Logging)
 	server, err := StartServer(ctx, config)
 	if err != nil {
@@ -110,18 +111,6 @@ func (cmd *runCmd) handleSIGINT(ctx context.Context, server *Server) {
 	}()
 	<-sigintCtx.Done()
 	server.Shutdown(ctx)
-}
-
-func (cmd *runCmd) applyGlobalArgs(c *config.Config, args *cmdLine) {
-	if args.Debug {
-		c.Logging.Level = config.LogLevel(slog.LevelDebug)
-	} else if args.Verbose {
-		c.Logging.Level = config.LogLevel(slog.LevelInfo)
-	} else if args.Quiet {
-		c.Logging.Level = config.LogLevel(slog.LevelWarn)
-	} else if args.Silent {
-		c.Logging.Level = config.LogLevel(slog.LevelError)
-	}
 }
 
 type versionCmd struct {
@@ -174,4 +163,35 @@ func (cmd *templateCmd) Run(_ context.Context, args *cmdLine) error {
 		diff.NewPrinter(os.Stdout, printerOptions...).Print(diffResult)
 	}
 	return nil
+}
+
+type notifyCmd struct {
+	Config  string `short:"c" help:"The configuration file to use" default:"${config_default}"`
+	Message string `short:"m" help:"The name of the message to send (as defined in configuration)"`
+}
+
+func (cmd *notifyCmd) Run(ctx context.Context, args *cmdLine) error {
+	path := strings.TrimSpace(cmd.Config)
+	if path == "" {
+		path = config.DefaultPath()
+	}
+	config, err := config.Load(path, false)
+	if err != nil {
+		return err
+	}
+	applyGlobalArgs(config, args)
+	applyLoggingConfig(&config.Logging)
+	return Notify(ctx, config, cmd.Message)
+}
+
+func applyGlobalArgs(c *config.Config, args *cmdLine) {
+	if args.Debug {
+		c.Logging.Level = config.LogLevel(slog.LevelDebug)
+	} else if args.Verbose {
+		c.Logging.Level = config.LogLevel(slog.LevelInfo)
+	} else if args.Quiet {
+		c.Logging.Level = config.LogLevel(slog.LevelWarn)
+	} else if args.Silent {
+		c.Logging.Level = config.LogLevel(slog.LevelError)
+	}
 }
