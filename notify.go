@@ -18,11 +18,20 @@ package totem
 
 import (
 	"context"
+	"fmt"
+	"log/slog"
 
 	"github.com/tdrn-org/totem/config"
 	"github.com/tdrn-org/totem/internal/notification"
 )
 
 func Notify(ctx context.Context, cfg *config.Config, message string) error {
-	return notification.Send(ctx, &cfg.Notify, message)
+	logger := slog.With(slog.String("message", message))
+	logger.Info("sending message...")
+	err := notification.Send(ctx, &cfg.Notify, message)
+	if err != nil {
+		return fmt.Errorf("failed to send message %q (cause: %w)", message, err)
+	}
+	logger.Info("message successfully sent")
+	return nil
 }
