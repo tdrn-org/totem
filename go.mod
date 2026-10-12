@@ -12,7 +12,7 @@ require (
 	github.com/swaggo/swag v1.16.6
 	github.com/tdrn-org/go-conf v0.0.10
 	github.com/tdrn-org/go-config-toml v0.1.1
-	github.com/tdrn-org/go-database v0.1.6
+	github.com/tdrn-org/go-database v0.1.7
 	github.com/tdrn-org/go-diff v0.1.6
 	github.com/tdrn-org/go-httpserver v0.1.6
 	github.com/tdrn-org/go-hue v1.2.3
