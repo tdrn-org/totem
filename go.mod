@@ -4,7 +4,7 @@ go 1.27.1
 
 require (
 	github.com/alecthomas/kong v1.16.1
-	github.com/mattermost/mattermost/server/public v0.4.4
+	github.com/mattermost/mattermost/server/public v0.5.0
 	github.com/modelcontextprotocol/go-sdk v1.8.0
 	github.com/rs/cors v1.11.1
 	github.com/sj14/jellyfin-go v0.5.0
