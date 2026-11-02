@@ -15,7 +15,7 @@ require (
 	github.com/tdrn-org/go-database v0.1.11
 	github.com/tdrn-org/go-diff v0.1.6
 	github.com/tdrn-org/go-httpserver v0.1.6
-	github.com/tdrn-org/go-hue v1.2.3
+	github.com/tdrn-org/go-hue v1.2.4
 	github.com/tdrn-org/go-jobticker v0.0.5
 	github.com/tdrn-org/go-log v0.6.4
 	github.com/tdrn-org/go-notify v0.0.10
@@ -65,7 +65,7 @@ require (
 	github.com/mattn/go-isatty v0.0.24 // indirect
 	github.com/miekg/dns v1.1.73 // indirect
 	github.com/ncruces/go-strftime v1.1.0 // indirect
-	github.com/oapi-codegen/runtime v1.7.0 // indirect
+	github.com/oapi-codegen/runtime v1.8.0 // indirect
 	github.com/oklog/run v1.2.0 // indirect
 	github.com/pborman/uuid v1.2.1 // indirect
 	github.com/pelletier/go-toml v1.9.5 // indirect
