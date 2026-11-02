@@ -195,8 +195,8 @@ github.com/neelance/astrewrite v0.0.0-20160511093645-99348263ae86/go.mod h1:kHJE
 github.com/neelance/sourcemap v0.0.0-20151028013722-8c68805598ab/go.mod h1:Qr6/a/Q4r9LP1IltGz7tA7iOK1WonHEYhu1HRBA7ZiM=
 github.com/oapi-codegen/nullable v1.1.0 h1:eAh8JVc5430VtYVnq00Hrbpag9PFRGWLjxR1/3KntMs=
 github.com/oapi-codegen/nullable v1.1.0/go.mod h1:KUZ3vUzkmEKY90ksAmit2+5juDIhIZhfDl+0PwOQlFY=
-github.com/oapi-codegen/runtime v1.7.0 h1:t7358VYPvNbWJ9gdAkIK/smVeHpBf6yp8VTsaZsb/7k=
-github.com/oapi-codegen/runtime v1.7.0/go.mod h1:GwV7hC2hviaMzj+ITfHVRESK5J2W/GefVwIND/bMGvU=
+github.com/oapi-codegen/runtime v1.8.0 h1:RJzEgQSJQADEPaG1cYuSCKYai/cCVRE2xnkrqhJs/3c=
+github.com/oapi-codegen/runtime v1.8.0/go.mod h1:GwV7hC2hviaMzj+ITfHVRESK5J2W/GefVwIND/bMGvU=
 github.com/oklog/run v1.2.0 h1:O8x3yXwah4A73hJdlrwo/2X6J62gE5qTMusH0dvz60E=
 github.com/oklog/run v1.2.0/go.mod h1:mgDbKRSwPhJfesJ4PntqFUbKQRZ50NgmZTSPlFA0YFk=
 github.com/openzipkin/zipkin-go v0.1.1/go.mod h1:NtoC/o8u3JlF1lSlyPNswIbeQH9bJTmOf0Erfk+hxe8=
@@ -278,8 +278,8 @@ github.com/tdrn-org/go-diff v0.1.6 h1:BkUtmLu8wDhN3i2vTM0xf79XH8e5Fr1vhyrPpdiwaY
 github.com/tdrn-org/go-diff v0.1.6/go.mod h1:zJpE11Rlvvjw8Jw/QljhwAIgsyCclTO6ALF5myR+zpI=
 github.com/tdrn-org/go-httpserver v0.1.6 h1:rtCIaPGnYLswQmUd4WZIx+oK1BhsOCkQVllonoNJQas=
 github.com/tdrn-org/go-httpserver v0.1.6/go.mod h1:FMywF9Fu9S+4sW89vXxcgJzup8dZyNnoAO0m84f3AYI=
-github.com/tdrn-org/go-hue v1.2.3 h1:uP7+o8msKw8ouYyrrW2UD+5+VMMBJiO13LwCnAx6BfY=
-github.com/tdrn-org/go-hue v1.2.3/go.mod h1:HIbN8NISg9q8tmFh4+FLPfJEGH0J6H0uusopRnfkDCc=
+github.com/tdrn-org/go-hue v1.2.4 h1:fmpH5FUQdKYEx6aBNAb7aSY8L8253/SNPSNNnif6mGg=
+github.com/tdrn-org/go-hue v1.2.4/go.mod h1:RFxswsC3bWG6zCOfsQrZy4UT2VY8SFNVh5x98tbz/ac=
 github.com/tdrn-org/go-jobticker v0.0.5 h1:BkPuwD9DZ8t3t5YTacBgJAE+j8wHt+KMDuqVv2K2Sac=
 github.com/tdrn-org/go-jobticker v0.0.5/go.mod h1:xnDpD9ozCBAuJnRXtco6o3dpO0qt8FJmew1e79/0FyM=
 github.com/tdrn-org/go-log v0.6.4 h1:AvpO/nizfq5O+wq6rJNocXG4HsIvsUAhgIG/MOg5LGI=
