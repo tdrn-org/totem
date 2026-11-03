@@ -17,6 +17,7 @@
 package mcp
 
 import (
+	"strings"
 	"testing"
 	"time"
 
@@ -83,4 +84,18 @@ func TestPulsesToCancelNothingPending(t *testing.T) {
 	selected, err := pulsesToCancel(nil, "", false)
 	require.NoError(t, err)
 	require.Empty(t, selected)
+}
+
+// TestEchoPulseCancelDescriptionMatchesBehaviour guards the gap found on 2026-11-03:
+// the behaviour fix changed schema and handler but left the tool description still
+// promising "omit id to cancel all". The model plans its call from that text, so a
+// stale description is a functional bug, not a typo.
+func TestEchoPulseCancelDescriptionMatchesBehaviour(t *testing.T) {
+	desc := echoPulseCancelDescription
+	require.Contains(t, desc, "all=true",
+		"the description must name the explicit bulk confirmation")
+	require.NotContains(t, desc, "omit id to cancel all",
+		"the description must not promise the removed bulk-by-default behaviour")
+	require.Contains(t, strings.ToLower(desc), "refused",
+		"the description must announce the refusal, otherwise the error reads like a fault")
 }
