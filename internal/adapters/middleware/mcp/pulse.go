@@ -19,6 +19,7 @@ package mcp
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/modelcontextprotocol/go-sdk/mcp"
@@ -113,12 +114,15 @@ func registerPulseTools(server *mcp.Server, runtime Runtime) {
 			"type": "object",
 			"properties": map[string]any{
 				"agent": map[string]any{"type": "string", "description": "The agent whose pulses to cancel (default: 'judy')."},
-				"id":    map[string]any{"type": "string", "description": "ID of a single pulse to cancel (see echo_pulse_list). Omit to cancel all pending pulses of the agent."},
+				"id":    map[string]any{"type": "string", "description": "ID of a single pulse to cancel (see echo_pulse_list). Mutually exclusive with all."},
+				"all":   map[string]any{"type": "boolean", "description": "Set to true to cancel every pending pulse of the agent. Required when id is omitted — an omitted id on its own is refused."},
 			},
+			"additionalProperties": false,
 		},
 	}, func(ctx context.Context, _ *mcp.CallToolRequest, input struct {
 		Agent string `json:"agent"`
 		ID    string `json:"id"`
+		All   bool   `json:"all"`
 	}) (*mcp.CallToolResult, any, error) {
 		agent := input.Agent
 		if agent == "" {
@@ -133,18 +137,9 @@ func registerPulseTools(server *mcp.Server, runtime Runtime) {
 				Content: []mcp.Content{&mcp.TextContent{Text: fmt.Sprintf("No pending pulses for agent %q.", agent)}},
 			}, nil, nil
 		}
-		cancelled := pulses
-		if input.ID != "" {
-			cancelled = nil
-			for _, p := range pulses {
-				if p.ID == input.ID {
-					cancelled = []*pulse.Pulse{p}
-					break
-				}
-			}
-			if cancelled == nil {
-				return nil, nil, fmt.Errorf("no pending pulse with ID %q for agent %q", input.ID, agent)
-			}
+		cancelled, err := pulsesToCancel(pulses, input.ID, input.All)
+		if err != nil {
+			return nil, nil, fmt.Errorf("%w (agent %q)", err, agent)
 		}
 		for _, p := range cancelled {
 			if err := runtime.DataStore().DeletePulse(ctx, p.ID); err != nil {
@@ -166,4 +161,36 @@ func formatCancelledPulsesText(agent string, cancelled []*pulse.Pulse) string {
 			p.ID, p.ScheduledAt.Format(time.RFC3339), p.Message)
 	}
 	return text
+}
+
+// pulsesToCancel resolves which pulses a cancel request targets. A single id
+// selects exactly that pulse; cancelling every pending pulse of an agent requires
+// the explicit all flag. Omitting both is refused rather than interpreted as "all":
+// a destructive bulk operation has to be asked for, never reached by leaving an
+// argument out (see issue #33). Unknown fields in the tool input degrade into an
+// omitted id the same way, so the refusal is what catches a mistyped argument.
+func pulsesToCancel(pulses []*pulse.Pulse, id string, all bool) ([]*pulse.Pulse, error) {
+	if id != "" && all {
+		return nil, fmt.Errorf("pass either id or all=true, not both")
+	}
+	if id != "" {
+		for _, p := range pulses {
+			if p.ID == id {
+				return []*pulse.Pulse{p}, nil
+			}
+		}
+		return nil, fmt.Errorf("no pending pulse with ID %q", id)
+	}
+	if all {
+		return pulses, nil
+	}
+	if len(pulses) == 0 {
+		return nil, nil
+	}
+	ids := make([]string, 0, len(pulses))
+	for _, p := range pulses {
+		ids = append(ids, p.ID)
+	}
+	return nil, fmt.Errorf("refusing to cancel %d pending pulse(s) (%s): pass an id, or all=true to confirm",
+		len(pulses), strings.Join(ids, ", "))
 }
