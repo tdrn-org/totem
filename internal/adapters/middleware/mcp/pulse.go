@@ -26,6 +26,12 @@ import (
 	"github.com/tdrn-org/totem/internal/domain/pulse"
 )
 
+// echoPulseCancelDescription is the tool description the model reads before calling.
+// It has to describe the current behaviour: an omitted id is refused unless all=true
+// is set. Kept as a constant so a test can enforce that, because a description that
+// still promises the old bulk-by-default behaviour is worse than no description.
+const echoPulseCancelDescription = "Cancels pending echo pulses for an agent. Pass id to cancel a single pulse, or all=true to cancel every pending pulse of the agent. Omitting both is refused — a bulk cancellation has to be confirmed explicitly. The response lists every cancelled pulse."
+
 func registerPulseTools(server *mcp.Server, runtime Runtime) {
 	// echo_pulse: schedule a self-addressed delayed notification
 	mcp.AddTool(server, &mcp.Tool{
@@ -109,7 +115,7 @@ func registerPulseTools(server *mcp.Server, runtime Runtime) {
 	// echo_pulse_cancel: cancel one or all pending pulses of an agent
 	mcp.AddTool(server, &mcp.Tool{
 		Name:        "echo_pulse_cancel",
-		Description: "Cancels pending echo pulses for an agent. Pass id to cancel a single pulse; omit id to cancel all pending pulses of the agent. The response lists every cancelled pulse.",
+		Description: echoPulseCancelDescription,
 		InputSchema: map[string]any{
 			"type": "object",
 			"properties": map[string]any{
