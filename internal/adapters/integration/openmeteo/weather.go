@@ -72,7 +72,7 @@ func (s *openmeteoService) Query24hWeather(ctx context.Context, location domain.
 	return sortAndFilterWeathers(weathers, time.Hour, 24*time.Hour), nil
 }
 
-func (s *openmeteoService) Query7dWeather(ctx context.Context, location domain.GeographicLocation) ([]*weather.AggregatedWeather, error) {
+func (s *openmeteoService) Query7dWeather(ctx context.Context, location domain.GeographicLocation) ([]*weather.DailyWeather, error) {
 	params := newForecastParams(s.config, location).
 		Daily(8).
 		Build()
@@ -199,16 +199,16 @@ func sortAndFilterWeathers(weathers []*weather.Weather, truncate, timerange time
 	return result
 }
 
-func sortAndFilterDailyWeathers(weathers []*weather.AggregatedWeather, truncate, timerange time.Duration) []*weather.AggregatedWeather {
+func sortAndFilterDailyWeathers(weathers []*weather.DailyWeather, truncate, timerange time.Duration) []*weather.DailyWeather {
 	from := time.Now().Truncate(truncate)
 	to := from.Add(timerange)
-	result := make([]*weather.AggregatedWeather, 0, len(weathers))
+	result := make([]*weather.DailyWeather, 0, len(weathers))
 	for _, weather := range weathers {
 		if weather.Time.Compare(from) >= 0 && weather.Time.Compare(to) < 0 {
 			result = append(result, weather)
 		}
 	}
-	slices.SortFunc(result, func(a, b *weather.AggregatedWeather) int {
+	slices.SortFunc(result, func(a, b *weather.DailyWeather) int {
 		return a.Time.Compare(b.Time)
 	})
 	return result

@@ -236,7 +236,7 @@ func hourlyResponseToWeather(response *openmeteoapi.GetV1Forecast200JSONResponse
 	return weather, nil
 }
 
-func dailyResponseToDailyWeathers(response *openmeteoapi.GetV1Forecast200JSONResponse) ([]*weather.AggregatedWeather, error) {
+func dailyResponseToDailyWeathers(response *openmeteoapi.GetV1Forecast200JSONResponse) ([]*weather.DailyWeather, error) {
 	if response.DailyUnits == nil || response.DailyUnits.Temperature2mMin == nil || response.DailyUnits.PrecipitationSum == nil || response.DailyUnits.WindSpeed10mMax == nil {
 		return nil, fmt.Errorf("missing daily units")
 	}
@@ -247,7 +247,7 @@ func dailyResponseToDailyWeathers(response *openmeteoapi.GetV1Forecast200JSONRes
 	if weatherCount == 0 {
 		return nil, fmt.Errorf("missing or incomplete daily response")
 	}
-	weathers := make([]*weather.AggregatedWeather, 0, weatherCount)
+	weathers := make([]*weather.DailyWeather, 0, weatherCount)
 	for i := range weatherCount {
 		weather, err := dailyResponseToDailyWeather(response, i)
 		if err != nil {
@@ -258,7 +258,7 @@ func dailyResponseToDailyWeathers(response *openmeteoapi.GetV1Forecast200JSONRes
 	return weathers, nil
 }
 
-func dailyResponseToDailyWeather(response *openmeteoapi.GetV1Forecast200JSONResponse, i int) (*weather.AggregatedWeather, error) {
+func dailyResponseToDailyWeather(response *openmeteoapi.GetV1Forecast200JSONResponse, i int) (*weather.DailyWeather, error) {
 	weatherTime, err := openmeteo.GetTime(&(*response.Daily.Time)[i], *response.Timezone)
 	if err != nil {
 		return nil, fmt.Errorf("invalid daily time/timezone (cause: %w)", err)
@@ -291,7 +291,7 @@ func dailyResponseToDailyWeather(response *openmeteoapi.GetV1Forecast200JSONResp
 		return nil, fmt.Errorf("missing daily weather code")
 	}
 	weatherCode := openmeteo.WMOCode((*response.Daily.WeatherCode)[i])
-	weather := &weather.AggregatedWeather{
+	weather := &weather.DailyWeather{
 		TemperatureUnit:        *response.DailyUnits.Temperature2mMin,
 		PrecipitationUnit:      *response.DailyUnits.PrecipitationSum,
 		WindSpeedUnit:          *response.DailyUnits.WindSpeed10mMax,
