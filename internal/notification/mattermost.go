@@ -86,6 +86,9 @@ func (c *mattermostConfig) ResolveChannelID(ctx context.Context, client *model.C
 }
 
 func newPayloadFactory(cfg *config.NotifyConfig) (*mattermost.PayloadFactory[mattermostParams], error) {
+	if cfg.MattermostURL.URL == nil {
+		return nil, fmt.Errorf("missing Mattermost URL configuration")
+	}
 	config := &mattermostConfig{
 		cfg: cfg,
 	}
