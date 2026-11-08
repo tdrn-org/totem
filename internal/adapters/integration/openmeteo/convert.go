@@ -94,7 +94,7 @@ func minutely15ResponseToWeathers(response *openmeteoapi.GetV1Forecast200JSONRes
 	}
 	weatherCount := len(*response.Minutely15.Time)
 	if weatherCount == 0 {
-		return nil, fmt.Errorf("missing or incomplelte minutely15 response")
+		return nil, fmt.Errorf("missing or incomplete minutely15 response")
 	}
 	weathers := make([]*weather.Weather, 0, weatherCount)
 	for i := range weatherCount {
@@ -171,7 +171,7 @@ func hourlyResponseToWeathers(response *openmeteoapi.GetV1Forecast200JSONRespons
 	}
 	weatherCount := len(*response.Hourly.Time)
 	if weatherCount == 0 {
-		return nil, fmt.Errorf("missing or incomplelte hourly response")
+		return nil, fmt.Errorf("missing or incomplete hourly response")
 	}
 	weathers := make([]*weather.Weather, 0, weatherCount)
 	for i := range weatherCount {
@@ -232,6 +232,83 @@ func hourlyResponseToWeather(response *openmeteoapi.GetV1Forecast200JSONResponse
 			Icon: weatherCode.Icon(),
 		},
 		IsDay: (*response.Hourly.IsDay)[i] != 0,
+	}
+	return weather, nil
+}
+
+func dailyResponseToDailyWeathers(response *openmeteoapi.GetV1Forecast200JSONResponse) ([]*weather.AggregatedWeather, error) {
+	if response.DailyUnits == nil || response.DailyUnits.Temperature2mMin == nil || response.DailyUnits.PrecipitationSum == nil || response.DailyUnits.WindSpeed10mMax == nil {
+		return nil, fmt.Errorf("missing daily units")
+	}
+	if response.Daily == nil || response.Daily.Time == nil || response.Timezone == nil {
+		return nil, fmt.Errorf("missing daily time/timezone")
+	}
+	weatherCount := len(*response.Daily.Time)
+	if weatherCount == 0 {
+		return nil, fmt.Errorf("missing or incomplete daily response")
+	}
+	weathers := make([]*weather.AggregatedWeather, 0, weatherCount)
+	for i := range weatherCount {
+		weather, err := dailyResponseToDailyWeather(response, i)
+		if err != nil {
+			return nil, err
+		}
+		weathers = append(weathers, weather)
+	}
+	return weathers, nil
+}
+
+func dailyResponseToDailyWeather(response *openmeteoapi.GetV1Forecast200JSONResponse, i int) (*weather.AggregatedWeather, error) {
+	weatherTime, err := openmeteo.GetTime(&(*response.Daily.Time)[i], *response.Timezone)
+	if err != nil {
+		return nil, fmt.Errorf("invalid daily time/timezone (cause: %w)", err)
+	}
+	if response.Daily.Temperature2mMin == nil || len(*response.Daily.Temperature2mMin) <= i {
+		return nil, fmt.Errorf("missing daily min temperature (2m)")
+	}
+	if response.Daily.Temperature2mMax == nil || len(*response.Daily.Temperature2mMax) <= i {
+		return nil, fmt.Errorf("missing daily max temperature (2m)")
+	}
+	if response.Daily.ApparentTemperatureMin == nil || len(*response.Daily.ApparentTemperatureMin) <= i {
+		return nil, fmt.Errorf("missing daily min apparent temperature")
+	}
+	if response.Daily.ApparentTemperatureMax == nil || len(*response.Daily.ApparentTemperatureMax) <= i {
+		return nil, fmt.Errorf("missing daily max apparent temperature")
+	}
+	if response.Daily.WindDirection10mDominant == nil || len(*response.Daily.WindDirection10mDominant) <= i {
+		return nil, fmt.Errorf("missing daily dominant wind direction (10m)")
+	}
+	if response.Daily.PrecipitationSum == nil || len(*response.Daily.PrecipitationSum) <= i {
+		return nil, fmt.Errorf("missing daily precipitation sum")
+	}
+	if response.Daily.WindSpeed10mMax == nil || len(*response.Daily.WindSpeed10mMax) <= i {
+		return nil, fmt.Errorf("missing daily max wind speed (10m)")
+	}
+	if response.Daily.WindGusts10mMax == nil || len(*response.Daily.WindGusts10mMax) <= i {
+		return nil, fmt.Errorf("missing daily max wind gusts (10m)")
+	}
+	if response.Daily.WeatherCode == nil || len(*response.Daily.WeatherCode) <= i {
+		return nil, fmt.Errorf("missing daily weather code")
+	}
+	weatherCode := openmeteo.WMOCode((*response.Daily.WeatherCode)[i])
+	weather := &weather.AggregatedWeather{
+		TemperatureUnit:        *response.DailyUnits.Temperature2mMin,
+		PrecipitationUnit:      *response.DailyUnits.PrecipitationSum,
+		WindSpeedUnit:          *response.DailyUnits.WindSpeed10mMax,
+		Time:                   weatherTime,
+		TemperatureMin:         (*response.Daily.Temperature2mMin)[i],
+		TemperatureMax:         (*response.Daily.Temperature2mMax)[i],
+		ApparentTemperatureMin: (*response.Daily.ApparentTemperatureMin)[i],
+		ApparentTemperatureMax: (*response.Daily.ApparentTemperatureMax)[i],
+		WindDirectionDominant:  (*response.Daily.WindDirection10mDominant)[i],
+		PrecipitationSum:       (*response.Daily.PrecipitationSum)[i],
+		WindSpeedMax:           (*response.Daily.WindSpeed10mMax)[i],
+		WindGustsMax:           (*response.Daily.WindGusts10mMax)[i],
+		Condition: weather.WeatherCondition{
+			Code: int(weatherCode),
+			Name: weatherCode.Code(),
+			Icon: weatherCode.Icon(),
+		},
 	}
 	return weather, nil
 }

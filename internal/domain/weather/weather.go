@@ -49,9 +49,23 @@ type Weather struct {
 	IsDay               bool
 }
 
+type AggregatedWeather struct {
+	WeatherUnits
+	Time                   time.Time
+	TemperatureMin         float32
+	TemperatureMax         float32
+	ApparentTemperatureMin float32
+	ApparentTemperatureMax float32
+	WindDirectionDominant  float32
+	PrecipitationSum       float32
+	WindSpeedMax           float32
+	WindGustsMax           float32
+	Condition              WeatherCondition
+}
+
 type WeatherService interface {
 	QueryCurrentWeather(ctx context.Context, location domain.GeographicLocation) (*Weather, error)
 	QueryUpcomingWeather(ctx context.Context, location domain.GeographicLocation) ([]*Weather, error)
 	Query24hWeather(ctx context.Context, location domain.GeographicLocation) ([]*Weather, error)
-	// Query7dWeather(ctx context.Context, location domain.GeographicLocation) ([]*Weather, error)
+	Query7dWeather(ctx context.Context, location domain.GeographicLocation) ([]*AggregatedWeather, error)
 }

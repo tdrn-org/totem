@@ -54,7 +54,7 @@ func (s *openmeteoService) QueryUpcomingWeather(ctx context.Context, location do
 	if err != nil {
 		return nil, fmt.Errorf("failed to convert upcoming weather response (cause: %w)", err)
 	}
-	return sortAndFilterWeathers(weathers, 8*time.Hour), nil
+	return sortAndFilterWeathers(weathers, time.Second, 8*time.Hour), nil
 }
 
 func (s *openmeteoService) Query24hWeather(ctx context.Context, location domain.GeographicLocation) ([]*weather.Weather, error) {
@@ -69,7 +69,22 @@ func (s *openmeteoService) Query24hWeather(ctx context.Context, location domain.
 	if err != nil {
 		return nil, fmt.Errorf("failed to convert 24h weather response (cause: %w)", err)
 	}
-	return sortAndFilterWeathers(weathers, 24*time.Hour), nil
+	return sortAndFilterWeathers(weathers, time.Hour, 24*time.Hour), nil
+}
+
+func (s *openmeteoService) Query7dWeather(ctx context.Context, location domain.GeographicLocation) ([]*weather.AggregatedWeather, error) {
+	params := newForecastParams(s.config, location).
+		Daily(8).
+		Build()
+	response, err := s.apiClient.GetV1Forecast(ctx, params)
+	if err != nil {
+		return nil, fmt.Errorf("failed to query 7d weather (cause: %w)", err)
+	}
+	weathers, err := dailyResponseToDailyWeathers((*openmeteoapi.GetV1Forecast200JSONResponse)(response.JSON200))
+	if err != nil {
+		return nil, fmt.Errorf("failed to convert 7d weather response (cause: %w)", err)
+	}
+	return sortAndFilterDailyWeathers(weathers, time.Hour, 7*24*time.Hour), nil
 }
 
 type forecastParamsBuilder struct {
@@ -169,8 +184,8 @@ func (b *forecastParamsBuilder) Build() *openmeteoapi.GetV1ForecastParams {
 	return b.params
 }
 
-func sortAndFilterWeathers(weathers []*weather.Weather, timerange time.Duration) []*weather.Weather {
-	from := time.Now()
+func sortAndFilterWeathers(weathers []*weather.Weather, truncate, timerange time.Duration) []*weather.Weather {
+	from := time.Now().Truncate(truncate)
 	to := from.Add(timerange)
 	result := make([]*weather.Weather, 0, len(weathers))
 	for _, weather := range weathers {
@@ -179,6 +194,21 @@ func sortAndFilterWeathers(weathers []*weather.Weather, timerange time.Duration)
 		}
 	}
 	slices.SortFunc(result, func(a, b *weather.Weather) int {
+		return a.Time.Compare(b.Time)
+	})
+	return result
+}
+
+func sortAndFilterDailyWeathers(weathers []*weather.AggregatedWeather, truncate, timerange time.Duration) []*weather.AggregatedWeather {
+	from := time.Now().Truncate(truncate)
+	to := from.Add(timerange)
+	result := make([]*weather.AggregatedWeather, 0, len(weathers))
+	for _, weather := range weathers {
+		if weather.Time.Compare(from) >= 0 && weather.Time.Compare(to) < 0 {
+			result = append(result, weather)
+		}
+	}
+	slices.SortFunc(result, func(a, b *weather.AggregatedWeather) int {
 		return a.Time.Compare(b.Time)
 	})
 	return result

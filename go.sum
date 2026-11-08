@@ -286,8 +286,8 @@ github.com/tdrn-org/go-log v0.6.4 h1:AvpO/nizfq5O+wq6rJNocXG4HsIvsUAhgIG/MOg5LGI
 github.com/tdrn-org/go-log v0.6.4/go.mod h1:BlnqMMnt1DwQjJZuxMy0qSffPttdv6ubcod6mgGBvzA=
 github.com/tdrn-org/go-notify v0.1.0 h1:CeO2My5CZh3guA2ubwoJzDrEjySODzdvOu8oE1HezpQ=
 github.com/tdrn-org/go-notify v0.1.0/go.mod h1:bAaMibhXd+yUXdeHuCnYYUWfWNlIHAbtFys9JA3g7Z4=
-github.com/tdrn-org/go-open-meteo v0.0.2 h1:L9WfXiUEaeXNg0PwKNvMI07mhobLIRR+o7jRy2NCsdM=
-github.com/tdrn-org/go-open-meteo v0.0.2/go.mod h1:YJT0KKpM05+bopHr5seFMb+gbLdwbxuy4E1ai+fHfXU=
+github.com/tdrn-org/go-open-meteo v0.0.3 h1:IyvOKG4e/gKCIXMzdFtBsJDaDXZ5F2K0TNc3i0fUoSo=
+github.com/tdrn-org/go-open-meteo v0.0.3/go.mod h1:YhXhb6IhlzPXbm2hxTuf9nIpr79fpXwdrzi3uDjmWeM=
 github.com/tdrn-org/go-tlsconf v0.0.15 h1:VscbpWYkvVY8fJf3ncGgFRRAmRQWTL1Uxr5JP9zRz2U=
 github.com/tdrn-org/go-tlsconf v0.0.15/go.mod h1:1iL49P7ov0OfD08T4rgL3BJ7Zw3UZRNK45PcWa26SgE=
 github.com/tdrn-org/go-tr064 v0.4.0 h1:9dtdL6ALvBxcol9zY/cNsxKuchXpke9xtnSzagjf5i0=

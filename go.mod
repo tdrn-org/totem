@@ -19,7 +19,7 @@ require (
 	github.com/tdrn-org/go-jobticker v0.0.5
 	github.com/tdrn-org/go-log v0.6.4
 	github.com/tdrn-org/go-notify v0.1.0
-	github.com/tdrn-org/go-open-meteo v0.0.2
+	github.com/tdrn-org/go-open-meteo v0.0.3
 	github.com/tdrn-org/go-tlsconf v0.0.15
 	github.com/tdrn-org/go-tr064 v0.4.0
 )
