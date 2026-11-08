@@ -82,9 +82,31 @@ type weatherUnits struct {
 	WindSpeed     string `json:"windSpeed"`
 }
 
-// weatherQueryResult bundles the converted points of a single query.
+// weatherDay is the transport representation of a single daily aggregate.
+// A daily aggregate is not a measurement at a point in time: it carries
+// ranges, sums and maxima for one calendar day. The day itself is
+// therefore rendered as a plain date (not as an instant) - a calendar day
+// has no unambiguous time zone, and rendering it as a timestamp would
+// silently shift it for any consumer in a different time zone.
+type weatherDay struct {
+	Date                   string           `json:"date"`
+	TemperatureMin         float32          `json:"temperatureMin"`
+	TemperatureMax         float32          `json:"temperatureMax"`
+	ApparentTemperatureMin float32          `json:"apparentTemperatureMin"`
+	ApparentTemperatureMax float32          `json:"apparentTemperatureMax"`
+	PrecipitationSum       float32          `json:"precipitationSum"`
+	WindDirectionDominant  float32          `json:"windDirectionDominant"`
+	WindSpeedMax           float32          `json:"windSpeedMax"`
+	WindGustsMax           float32          `json:"windGustsMax"`
+	Condition              weatherCondition `json:"condition"`
+}
+
+// weatherQueryResult bundles the converted points of a single query. A
+// scope either yields points (measurements) or days (daily aggregates),
+// never both - the scope decides which representation applies.
 type weatherQueryResult struct {
 	points     []weatherPoint
+	days       []weatherDay
 	resolution string
 	units      *weatherUnits
 }
@@ -106,7 +128,8 @@ func registerWeatherAPI(server *mcp.Server, services []weather.WeatherService, r
 			"'24h' (hourly steps, next 24 hours), '7d' (daily aggregates, next 7 days). " +
 			"All returned times are rendered in the time zone of the queried location; " +
 			"the weather condition is returned as WMO code, stable enum name and icon. " +
-			"Currently implemented scope: 'current'.",
+			"The '7d' scope returns 'days' (daily aggregates: temperature ranges, sums, maxima and dominant wind direction) " +
+			"instead of 'points'; the day is a plain date since a calendar day carries no unambiguous time zone.",
 		InputSchema: map[string]any{
 			"type": "object",
 			"properties": map[string]any{
@@ -135,16 +158,21 @@ func registerWeatherAPI(server *mcp.Server, services []weather.WeatherService, r
 		if err != nil {
 			return nil, nil, err
 		}
-		text := formatWeatherText(location, scope, result.points)
-		return &mcp.CallToolResult{
-			Content: []mcp.Content{&mcp.TextContent{Text: text}},
-		}, map[string]any{
+		text := formatWeatherText(location, scope, result)
+		structured := map[string]any{
 			"scope":      scope,
 			"resolution": result.resolution,
 			"location":   newWeatherLocation(location),
 			"units":      result.units,
-			"points":     result.points,
-		}, nil
+		}
+		if result.days != nil {
+			structured["days"] = result.days
+		} else {
+			structured["points"] = result.points
+		}
+		return &mcp.CallToolResult{
+			Content: []mcp.Content{&mcp.TextContent{Text: text}},
+		}, structured, nil
 	})
 }
 
@@ -204,7 +232,15 @@ func queryWeatherFromService(ctx context.Context, service weather.WeatherService
 			units:      newWeatherUnitsFrom(weathers),
 		}, nil
 	case scope7d:
-		return nil, fmt.Errorf("scope %q is not implemented yet", scope7d)
+		days, err := service.Query7dWeather(ctx, geoLocation)
+		if err != nil {
+			return nil, err
+		}
+		return &weatherQueryResult{
+			days:       newWeatherDays(days),
+			resolution: "day",
+			units:      newWeatherUnitsFromDaily(days),
+		}, nil
 	default:
 		return nil, fmt.Errorf("unknown scope %q (expected one of %s, %s, %s, %s)",
 			scope, scopeCurrent, scopeUpcoming, scope24h, scope7d)
@@ -217,6 +253,39 @@ func newWeatherPoints(weathers []*weather.Weather, timezone *time.Location) []we
 		points = append(points, newWeatherPoint(w, timezone))
 	}
 	return points
+}
+
+func newWeatherDays(days []*weather.DailyWeather) []weatherDay {
+	result := make([]weatherDay, 0, len(days))
+	for _, day := range days {
+		result = append(result, newWeatherDay(day))
+	}
+	return result
+}
+
+// newWeatherDay converts a daily aggregate to its transport
+// representation. The date is taken exactly as the provider delivered it:
+// the domain holds it as the day's midnight in the provider's time zone,
+// so converting it into another time zone would shift the calendar day
+// for every location west of Greenwich (09.11. 00:00 UTC would become
+// 08.11. in New York).
+func newWeatherDay(day *weather.DailyWeather) weatherDay {
+	return weatherDay{
+		Date:                   day.Time.Format("2006-01-02"),
+		TemperatureMin:         day.TemperatureMin,
+		TemperatureMax:         day.TemperatureMax,
+		ApparentTemperatureMin: day.ApparentTemperatureMin,
+		ApparentTemperatureMax: day.ApparentTemperatureMax,
+		PrecipitationSum:       day.PrecipitationSum,
+		WindDirectionDominant:  day.WindDirectionDominant,
+		WindSpeedMax:           day.WindSpeedMax,
+		WindGustsMax:           day.WindGustsMax,
+		Condition: weatherCondition{
+			Code: day.Condition.Code,
+			Name: day.Condition.Name,
+			Icon: day.Condition.Icon,
+		},
+	}
 }
 
 // newWeatherPoint converts a domain weather point to its transport
@@ -264,6 +333,18 @@ func newWeatherUnitsFrom(weathers []*weather.Weather) *weatherUnits {
 	return newWeatherUnits(weathers[0])
 }
 
+func newWeatherUnitsFromDaily(days []*weather.DailyWeather) *weatherUnits {
+	if len(days) == 0 {
+		return nil
+	}
+	day := days[0]
+	return &weatherUnits{
+		Temperature:   day.TemperatureUnit,
+		Precipitation: day.PrecipitationUnit,
+		WindSpeed:     day.WindSpeedUnit,
+	}
+}
+
 func newWeatherLocation(location *domain.Location) weatherLocation {
 	return weatherLocation{
 		ID:        location.ID,
@@ -282,9 +363,13 @@ func locationTimezoneName(location *domain.Location) string {
 	return location.Timezone.String()
 }
 
-func formatWeatherText(location *domain.Location, scope string, points []weatherPoint) string {
+func formatWeatherText(location *domain.Location, scope string, result *weatherQueryResult) string {
 	text := fmt.Sprintf("Weather for %q (%s) - scope %s, time zone %s:\n",
 		location.Name, location.Address, scope, locationTimezoneName(location))
+	if result.days != nil {
+		return formatWeatherDaysText(text, result.days)
+	}
+	points := result.points
 	if len(points) == 0 {
 		return text + "  No weather data available.\n"
 	}
@@ -300,6 +385,21 @@ func formatWeatherText(location *domain.Location, scope string, points []weather
 			text += ", night"
 		}
 		text += "\n"
+	}
+	return strings.TrimRight(text, "\n")
+}
+
+func formatWeatherDaysText(text string, days []weatherDay) string {
+	if len(days) == 0 {
+		return text + "  No weather data available.\n"
+	}
+	for _, day := range days {
+		text += fmt.Sprintf("  %s: %s %.1f to %.1f (feels like %.1f to %.1f), ",
+			day.Date, day.Condition.Name,
+			day.TemperatureMin, day.TemperatureMax,
+			day.ApparentTemperatureMin, day.ApparentTemperatureMax)
+		text += fmt.Sprintf("precipitation sum %.1f, wind max %.1f from %.0f° (gusts max %.1f)\n",
+			day.PrecipitationSum, day.WindSpeedMax, day.WindDirectionDominant, day.WindGustsMax)
 	}
 	return strings.TrimRight(text, "\n")
 }
