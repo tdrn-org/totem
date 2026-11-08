@@ -122,7 +122,7 @@ func minutely15ResponseToWeather(response *openmeteoapi.GetV1Forecast200JSONResp
 	if response.Minutely15.WindDirection10m == nil || len(*response.Minutely15.WindDirection10m) <= i {
 		return nil, fmt.Errorf("missing minutely15 wind direction (10m)")
 	}
-	if response.Minutely15.WindSpeed10m == nil || len(*response.Minutely15.WindSpeed10m) <= i {
+	if response.Minutely15.Precipitation == nil || len(*response.Minutely15.Precipitation) <= i {
 		return nil, fmt.Errorf("missing minutely15 precipitation")
 	}
 	if response.Minutely15.WindSpeed10m == nil || len(*response.Minutely15.WindSpeed10m) <= i {
@@ -196,7 +196,7 @@ func hourlyResponseToWeather(response *openmeteoapi.GetV1Forecast200JSONResponse
 	if response.Hourly.WindDirection10m == nil || len(*response.Hourly.WindDirection10m) <= i {
 		return nil, fmt.Errorf("missing hourly wind direction (10m)")
 	}
-	if response.Hourly.WindSpeed10m == nil || len(*response.Hourly.WindSpeed10m) <= i {
+	if response.Hourly.Precipitation == nil || len(*response.Hourly.Precipitation) <= i {
 		return nil, fmt.Errorf("missing hourly precipitation")
 	}
 	if response.Hourly.WindSpeed10m == nil || len(*response.Hourly.WindSpeed10m) <= i {
