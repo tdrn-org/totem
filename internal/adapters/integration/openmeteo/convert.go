@@ -195,6 +195,9 @@ func hourlyResponseToWeather(response *openmeteoapi.GetV1Forecast200JSONResponse
 	if response.Hourly.ApparentTemperature == nil || len(*response.Hourly.ApparentTemperature) <= i {
 		return nil, fmt.Errorf("missing hourly apparent temperature")
 	}
+	if response.Hourly.RelativeHumidity2m == nil || len(*response.Hourly.RelativeHumidity2m) <= i {
+		return nil, fmt.Errorf("missing hourly relative humidity")
+	}
 	if response.Hourly.WindDirection10m == nil || len(*response.Hourly.WindDirection10m) <= i {
 		return nil, fmt.Errorf("missing hourly wind direction (10m)")
 	}
