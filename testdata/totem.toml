@@ -79,3 +79,6 @@ login = "abcdefgh"
 
 [[service.jellyfin]]
 enabled = false
+
+[service.open_meteo]
+enabled = false

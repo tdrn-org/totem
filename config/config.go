@@ -32,6 +32,7 @@ type Config struct {
 		FritzboxServices  []FritzboxConfig  `toml:"fritzbox"`
 		HuebridgeServices []HuebridgeConfig `toml:"huebridge"`
 		JellyfinServices  []JellyfinConfig  `toml:"jellyfin"`
+		OpenMeteoConfig   OpenMeteoConfig   `toml:"open_meteo"`
 	} `toml:"service"`
 }
 

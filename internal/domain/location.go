@@ -16,6 +16,18 @@
 
 package domain
 
+import "time"
+
+// GeographicLocation represents a geographic location.
+type GeographicLocation struct {
+	// Latitude is the geographic latitude of this location.
+	Latitude float64
+	// Longitude is the geographic longitude of this location.
+	Longitude float64
+	// Timezone of this geographic location.
+	Timezone *time.Location
+}
+
 // Location represents a physical location where Totem operates.
 // Usually a location is assigned to a specific device (Hue bridge,
 // FRITZ!Box, etc.) which operating in exactly this location.
@@ -26,10 +38,8 @@ type Location struct {
 	Name string
 	// Address is the postal address of this location.
 	Address string
-	// Latitude is the geographic latitude of this location.
-	Latitude float64
-	// Longitude is the geographic longitude of this location.
-	Longitude float64
+	// Latitude and Longitude of this location.
+	GeographicLocation
 }
 
 func (l *Location) Equal(other *Location) bool {

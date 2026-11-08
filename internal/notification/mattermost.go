@@ -19,6 +19,7 @@ package notification
 import (
 	"context"
 	"fmt"
+	"net/url"
 
 	"github.com/mattermost/mattermost/server/public/model"
 	"github.com/tdrn-org/go-notify/mattermost"
@@ -60,8 +61,8 @@ type mattermostConfig struct {
 	cfg *config.NotifyConfig
 }
 
-func (c *mattermostConfig) GetServerURL() (string, error) {
-	return c.cfg.MattermostURL, nil
+func (c *mattermostConfig) GetServerURL() (*url.URL, error) {
+	return c.cfg.MattermostURL.URL, nil
 }
 
 func (c *mattermostConfig) GetToken() (string, error) {

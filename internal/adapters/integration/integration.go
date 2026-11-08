@@ -52,6 +52,8 @@ const (
 	NatureMedia Nature = "media"
 	// NatureLan is defined by routers providing LAN access and routing.
 	NatureLan Nature = "lan"
+	// NatureWeather is defined by location based weather forecast services.
+	NatureWeather Nature = "weather"
 )
 
 type Service interface {

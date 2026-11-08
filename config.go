@@ -31,6 +31,7 @@ import (
 	"github.com/tdrn-org/totem/internal/adapters/integration/fritzbox"
 	"github.com/tdrn-org/totem/internal/adapters/integration/huebridge"
 	"github.com/tdrn-org/totem/internal/adapters/integration/jellyfin"
+	"github.com/tdrn-org/totem/internal/adapters/integration/openmeteo"
 	"github.com/tdrn-org/totem/internal/domain"
 )
 
@@ -130,6 +131,7 @@ func (s *Server) resolveLocationID(locationID string) (*domain.Location, bool) {
 				Address:   locationConfig.Address,
 				Latitude:  locationConfig.Latitude,
 				Longitude: locationConfig.Longitude,
+				Timezone:  locationConfig.Timezone.Location,
 			}
 			return location, true
 		}
@@ -152,6 +154,9 @@ func (s *Server) bindIntegrationServices(cfg *config.Config) {
 		if jellyfinConfig.Enabled {
 			s.bindJellyfinService(&jellyfinConfig)
 		}
+	}
+	if cfg.Services.OpenMeteoConfig.Enabled {
+		s.bindOpenMeteoService(&cfg.Services.OpenMeteoConfig)
 	}
 }
 
@@ -223,4 +228,24 @@ func (c *jellyfinConfig) APIKey() string {
 
 func (c *jellyfinConfig) UserID() string {
 	return c.cfg.UserID
+}
+
+func (s *Server) bindOpenMeteoService(cfg *config.OpenMeteoConfig) {
+	openmeteo.Register(s.runtime(), &openmeteoConfig{cfg: cfg})
+}
+
+type openmeteoConfig struct {
+	cfg *config.OpenMeteoConfig
+}
+
+func (c *openmeteoConfig) APIURL() *url.URL {
+	return c.cfg.APIURL.URL
+}
+
+func (c *openmeteoConfig) TemperatureUnit() config.TemperatureUnit {
+	return c.cfg.TemperatureUnit
+}
+
+func (c *openmeteoConfig) WindSpeedUnit() config.WindSpeedUnit {
+	return c.cfg.WindSpeedUnit
 }

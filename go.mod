@@ -18,15 +18,17 @@ require (
 	github.com/tdrn-org/go-hue v1.2.4
 	github.com/tdrn-org/go-jobticker v0.0.5
 	github.com/tdrn-org/go-log v0.6.4
-	github.com/tdrn-org/go-notify v0.0.11
+	github.com/tdrn-org/go-notify v0.1.0
+	github.com/tdrn-org/go-open-meteo v0.0.2
 	github.com/tdrn-org/go-tlsconf v0.0.15
 	github.com/tdrn-org/go-tr064 v0.4.0
+	golang.org/x/text v0.43.0
 )
 
 require (
 	github.com/KyleBanks/depth v1.2.1 // indirect
 	github.com/Masterminds/semver/v3 v3.5.0 // indirect
-	github.com/adhocore/gronx v1.20.5 // indirect
+	github.com/adhocore/gronx v1.20.6 // indirect
 	github.com/apapsch/go-jsonmerge/v2 v2.0.0 // indirect
 	github.com/brutella/dnssd v1.2.14 // indirect
 	github.com/cespare/xxhash/v2 v2.3.0 // indirect
@@ -100,16 +102,15 @@ require (
 	golang.org/x/oauth2 v0.37.0 // indirect
 	golang.org/x/sync v0.24.0 // indirect
 	golang.org/x/sys v0.49.0 // indirect
-	golang.org/x/text v0.43.0 // indirect
 	golang.org/x/time v0.16.0 // indirect
 	golang.org/x/tools v0.52.0 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20261026165753-2ffab32bce7e // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20261104224025-d1e00e9f33ab // indirect
 	google.golang.org/grpc v1.85.0 // indirect
 	google.golang.org/protobuf v1.36.12 // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1 // indirect
 	gopkg.in/validator.v2 v2.0.1 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
-	modernc.org/libc v1.80.0 // indirect
+	modernc.org/libc v1.80.1 // indirect
 	modernc.org/mathutil v1.7.1 // indirect
 	modernc.org/memory v1.12.1 // indirect
 	modernc.org/sqlite v1.61.1 // indirect

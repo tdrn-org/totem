@@ -17,11 +17,12 @@
 package config
 
 import (
+	"github.com/tdrn-org/go-config-toml"
 	"github.com/tdrn-org/go-jobticker"
 )
 
 type NotifyConfig struct {
-	MattermostURL         string                         `toml:"mattermost_url"`
+	MattermostURL         config.URLSpec                 `toml:"mattermost_url"`
 	MattermostToken       string                         `toml:"mattermost_token"`
 	ArrivalNotification   string                         `toml:"arrival_notification"`
 	DepartureNotification string                         `toml:"departure_notification"`
