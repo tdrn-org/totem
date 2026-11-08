@@ -49,13 +49,8 @@ type Weather struct {
 	IsDay               bool
 }
 
-type CurrentWeather struct {
-	Weather
-	CloudCover float32
-}
-
 type WeatherService interface {
-	QueryCurrentWeather(ctx context.Context, location domain.GeographicLocation) (*CurrentWeather, error)
+	QueryCurrentWeather(ctx context.Context, location domain.GeographicLocation) (*Weather, error)
 	QueryUpcomingWeather(ctx context.Context, location domain.GeographicLocation) ([]*Weather, error)
 	Query24hWeather(ctx context.Context, location domain.GeographicLocation) ([]*Weather, error)
 	// Query7dWeather(ctx context.Context, location domain.GeographicLocation) ([]*Weather, error)

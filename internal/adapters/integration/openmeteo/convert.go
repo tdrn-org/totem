@@ -24,7 +24,7 @@ import (
 	"github.com/tdrn-org/totem/internal/domain/weather"
 )
 
-func currentResponseToCurrentWeather(response *openmeteoapi.GetV1Forecast200JSONResponse) (*weather.CurrentWeather, error) {
+func currentResponseToCurrentWeather(response *openmeteoapi.GetV1Forecast200JSONResponse) (*weather.Weather, error) {
 	if response.CurrentUnits == nil || response.CurrentUnits.Temperature2m == nil || response.CurrentUnits.Precipitation == nil || response.CurrentUnits.WindSpeed10m == nil {
 		return nil, fmt.Errorf("missing current units")
 	}
@@ -40,6 +40,9 @@ func currentResponseToCurrentWeather(response *openmeteoapi.GetV1Forecast200JSON
 	}
 	if response.Current.ApparentTemperature == nil {
 		return nil, fmt.Errorf("missing current apparent temperature")
+	}
+	if response.Current.RelativeHumidity2m == nil {
+		return nil, fmt.Errorf("missing current relative humidity")
 	}
 	if response.Current.WindDirection10m == nil {
 		return nil, fmt.Errorf("missing current wind direction (10m)")
@@ -60,10 +63,7 @@ func currentResponseToCurrentWeather(response *openmeteoapi.GetV1Forecast200JSON
 	if response.Current.IsDay == nil {
 		return nil, fmt.Errorf("missing current day flag")
 	}
-	if response.Current.CloudCover == nil {
-		return nil, fmt.Errorf("missing current cloud cover")
-	}
-	weather := &weather.CurrentWeather{
+	weather := &weather.Weather{
 		TemperatureUnit:     *response.CurrentUnits.Temperature2m,
 		PrecipitationUnit:   *response.CurrentUnits.Precipitation,
 		WindSpeedUnit:       *response.CurrentUnits.WindSpeed10m,
@@ -80,8 +80,7 @@ func currentResponseToCurrentWeather(response *openmeteoapi.GetV1Forecast200JSON
 			Name: weatherCode.Code(),
 			Icon: weatherCode.Icon(),
 		},
-		IsDay:      (*response.Current.IsDay) != 0,
-		CloudCover: *response.Current.CloudCover,
+		IsDay: (*response.Current.IsDay) != 0,
 	}
 	return weather, nil
 }
@@ -118,6 +117,9 @@ func minutely15ResponseToWeather(response *openmeteoapi.GetV1Forecast200JSONResp
 	}
 	if response.Minutely15.ApparentTemperature == nil || len(*response.Minutely15.ApparentTemperature) <= i {
 		return nil, fmt.Errorf("missing minutely15 apparent temperature")
+	}
+	if response.Minutely15.RelativeHumidity2m == nil || len(*response.Minutely15.RelativeHumidity2m) <= i {
+		return nil, fmt.Errorf("missing minutely15 relative humidity")
 	}
 	if response.Minutely15.WindDirection10m == nil || len(*response.Minutely15.WindDirection10m) <= i {
 		return nil, fmt.Errorf("missing minutely15 wind direction (10m)")

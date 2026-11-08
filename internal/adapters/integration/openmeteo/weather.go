@@ -27,7 +27,7 @@ import (
 	"github.com/tdrn-org/totem/internal/domain/weather"
 )
 
-func (s *openmeteoService) QueryCurrentWeather(ctx context.Context, location domain.GeographicLocation) (*weather.CurrentWeather, error) {
+func (s *openmeteoService) QueryCurrentWeather(ctx context.Context, location domain.GeographicLocation) (*weather.Weather, error) {
 	params := newForecastParams(s.config, location).
 		Current().
 		Build()

@@ -53,7 +53,6 @@ type weatherPoint struct {
 	WindGusts           float32          `json:"windGusts"`
 	Condition           weatherCondition `json:"condition"`
 	IsDay               bool             `json:"isDay"`
-	CloudCover          *float32         `json:"cloudCover,omitempty"`
 }
 
 // weatherCondition mirrors the WMO condition of a point as structure:
@@ -178,13 +177,11 @@ func queryWeatherFromService(ctx context.Context, service weather.WeatherService
 		if err != nil {
 			return nil, err
 		}
-		point := newWeatherPoint(&current.Weather, location.Timezone)
-		cloudCover := current.CloudCover
-		point.CloudCover = &cloudCover
+		point := newWeatherPoint(current, location.Timezone)
 		return &weatherQueryResult{
 			points:     []weatherPoint{point},
 			resolution: "point",
-			units:      newWeatherUnits(&current.Weather),
+			units:      newWeatherUnits(current),
 		}, nil
 	case scopeUpcoming:
 		weathers, err := service.QueryUpcomingWeather(ctx, geoLocation)
@@ -297,9 +294,6 @@ func formatWeatherText(location *domain.Location, scope string, points []weather
 			point.Temperature, point.ApparentTemperature, point.Humidity)
 		text += fmt.Sprintf("wind %.1f from %.0f° (gusts %.1f), precipitation %.1f",
 			point.WindSpeed, point.WindDirection, point.WindGusts, point.Precipitation)
-		if point.CloudCover != nil {
-			text += fmt.Sprintf(", cloud cover %.0f%%", *point.CloudCover)
-		}
 		if point.IsDay {
 			text += ", day"
 		} else {
