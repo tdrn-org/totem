@@ -58,5 +58,5 @@ type WeatherService interface {
 	QueryCurrentWeather(ctx context.Context, location domain.GeographicLocation) (*CurrentWeather, error)
 	QueryUpcomingWeather(ctx context.Context, location domain.GeographicLocation) ([]*Weather, error)
 	Query24hWeather(ctx context.Context, location domain.GeographicLocation) ([]*Weather, error)
-	Query7dWeather(ctx context.Context, location domain.GeographicLocation) ([]*Weather, error)
+	// Query7dWeather(ctx context.Context, location domain.GeographicLocation) ([]*Weather, error)
 }
