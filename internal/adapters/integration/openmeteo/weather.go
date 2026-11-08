@@ -78,13 +78,15 @@ type forecastParamsBuilder struct {
 
 func newForecastParams(config Config, location domain.GeographicLocation) *forecastParamsBuilder {
 	temperaturUnit := openmeteoapi.GetV1ForecastParamsTemperatureUnit(config.TemperatureUnit())
+	precipitationUnit := openmeteoapi.GetV1ForecastParamsPrecipitationUnit(config.PrecipitationUnit())
 	windSpeedUnit := openmeteoapi.GetV1ForecastParamsWindSpeedUnit(config.WindSpeedUnit())
 	return &forecastParamsBuilder{
 		params: &openmeteoapi.GetV1ForecastParams{
-			Latitude:        fmt.Sprintf("%.4f", location.Latitude),
-			Longitude:       fmt.Sprintf("%.4f", location.Longitude),
-			TemperatureUnit: &temperaturUnit,
-			WindSpeedUnit:   &windSpeedUnit,
+			Latitude:          fmt.Sprintf("%.4f", location.Latitude),
+			Longitude:         fmt.Sprintf("%.4f", location.Longitude),
+			TemperatureUnit:   &temperaturUnit,
+			PrecipitationUnit: &precipitationUnit,
+			WindSpeedUnit:     &windSpeedUnit,
 		},
 	}
 }

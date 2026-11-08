@@ -32,6 +32,7 @@ const Name = "openmeteo"
 type Config interface {
 	APIURL() *url.URL
 	TemperatureUnit() config.TemperatureUnit
+	PrecipitationUnit() config.PrecipitationUnit
 	WindSpeedUnit() config.WindSpeedUnit
 }
 
@@ -48,6 +49,7 @@ func Register(host integration.Host, config Config) (integration.Service, error)
 		apiClient: apiClient,
 		logger:    slog.With(slog.String("serviceID", serviceID)),
 	}
+	host.RegisterService(s)
 	return s, nil
 }
 

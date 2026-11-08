@@ -246,6 +246,10 @@ func (c *openmeteoConfig) TemperatureUnit() config.TemperatureUnit {
 	return c.cfg.TemperatureUnit
 }
 
+func (c *openmeteoConfig) PrecipitationUnit() config.PrecipitationUnit {
+	return c.cfg.PrecipitationUnit
+}
+
 func (c *openmeteoConfig) WindSpeedUnit() config.WindSpeedUnit {
 	return c.cfg.WindSpeedUnit
 }
