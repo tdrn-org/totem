@@ -88,6 +88,7 @@ func NewHandler(runtime Runtime) http.Handler {
 
 	// Register tools from services based on their natures
 	registerSmarthomeTools(server, runtime)
+	registerWeatherTools(server, runtime)
 	registerMediaTools(server, runtime)
 	registerPresenceTools(server, runtime)
 	registerPulseTools(server, runtime)
