@@ -237,7 +237,7 @@ func queryWeatherFromService(ctx context.Context, service weather.WeatherService
 			return nil, err
 		}
 		return &weatherQueryResult{
-			days:       newWeatherDays(days, location.Timezone),
+			days:       newWeatherDays(days),
 			resolution: "day",
 			units:      newWeatherUnitsFromDaily(days),
 		}, nil
@@ -255,24 +255,23 @@ func newWeatherPoints(weathers []*weather.Weather, timezone *time.Location) []we
 	return points
 }
 
-func newWeatherDays(days []*weather.DailyWeather, timezone *time.Location) []weatherDay {
+func newWeatherDays(days []*weather.DailyWeather) []weatherDay {
 	result := make([]weatherDay, 0, len(days))
 	for _, day := range days {
-		result = append(result, newWeatherDay(day, timezone))
+		result = append(result, newWeatherDay(day))
 	}
 	return result
 }
 
 // newWeatherDay converts a daily aggregate to its transport
-// representation. The day is rendered as a date in the location's time
-// zone, since the provider delivers the day boundaries as a plain date.
-func newWeatherDay(day *weather.DailyWeather, timezone *time.Location) weatherDay {
-	dayTime := day.Time
-	if timezone != nil {
-		dayTime = dayTime.In(timezone)
-	}
+// representation. The date is taken exactly as the provider delivered it:
+// the domain holds it as the day's midnight in the provider's time zone,
+// so converting it into another time zone would shift the calendar day
+// for every location west of Greenwich (09.11. 00:00 UTC would become
+// 08.11. in New York).
+func newWeatherDay(day *weather.DailyWeather) weatherDay {
 	return weatherDay{
-		Date:                   dayTime.Format("2006-01-02"),
+		Date:                   day.Time.Format("2006-01-02"),
 		TemperatureMin:         day.TemperatureMin,
 		TemperatureMax:         day.TemperatureMax,
 		ApparentTemperatureMin: day.ApparentTemperatureMin,
