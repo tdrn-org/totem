@@ -42,7 +42,8 @@ presence = true
 
 [[notify.schedule]]
 agent = "agent1"
-schedule = "5 * * * *"
+schedule = "20 10,12,14,16,18 * * *"
+cooldown = "2h"
 notification = "Hello {{.Agent}}, check for new emails."
 
 [notify.message.alert]

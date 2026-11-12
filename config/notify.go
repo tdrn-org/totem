@@ -17,8 +17,6 @@
 package config
 
 import (
-	"time"
-
 	"github.com/tdrn-org/go-config-toml"
 	"github.com/tdrn-org/go-jobticker"
 )
@@ -42,7 +40,7 @@ type NotifyProfileConfig struct {
 type NotifyScheduleConfig struct {
 	Agent        string                 `toml:"agent"`
 	Schedule     jobticker.ScheduleSpec `toml:"schedule"`
-	Cooldown     time.Duration          `toml:"cooldown"`
+	Cooldown     config.DurationSpec    `toml:"cooldown"`
 	Notification string                 `toml:"notification"`
 }
 
