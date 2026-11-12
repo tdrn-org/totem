@@ -4,7 +4,7 @@ go 1.27.1
 
 require (
 	github.com/alecthomas/kong v1.17.0
-	github.com/mattermost/mattermost/server/public v0.6.0
+	github.com/mattermost/mattermost/server/public v0.6.1
 	github.com/modelcontextprotocol/go-sdk v1.8.0
 	github.com/rs/cors v1.11.1
 	github.com/sj14/jellyfin-go v0.5.0
@@ -16,10 +16,10 @@ require (
 	github.com/tdrn-org/go-diff v0.1.6
 	github.com/tdrn-org/go-httpserver v0.1.7
 	github.com/tdrn-org/go-hue v1.2.4
-	github.com/tdrn-org/go-jobticker v0.0.5
+	github.com/tdrn-org/go-jobticker v0.0.6
 	github.com/tdrn-org/go-log v0.6.4
-	github.com/tdrn-org/go-notify v0.1.0
-	github.com/tdrn-org/go-open-meteo v0.0.3
+	github.com/tdrn-org/go-notify v0.1.1
+	github.com/tdrn-org/go-open-meteo v0.0.4
 	github.com/tdrn-org/go-tlsconf v0.0.15
 	github.com/tdrn-org/go-tr064 v0.4.0
 )
@@ -66,7 +66,7 @@ require (
 	github.com/mattn/go-isatty v0.0.24 // indirect
 	github.com/miekg/dns v1.1.73 // indirect
 	github.com/ncruces/go-strftime v1.1.0 // indirect
-	github.com/oapi-codegen/runtime v1.8.0 // indirect
+	github.com/oapi-codegen/runtime v1.9.0 // indirect
 	github.com/oklog/run v1.2.0 // indirect
 	github.com/pborman/uuid v1.2.1 // indirect
 	github.com/pelletier/go-toml v1.9.5 // indirect
@@ -77,7 +77,7 @@ require (
 	github.com/russross/blackfriday/v2 v2.1.0 // indirect
 	github.com/segmentio/asm v1.2.1 // indirect
 	github.com/segmentio/encoding v0.5.4 // indirect
-	github.com/tdrn-org/go-trace v0.0.1 // indirect
+	github.com/tdrn-org/go-trace v0.0.2 // indirect
 	github.com/tinylib/msgp v1.6.5 // indirect
 	github.com/urfave/cli/v2 v2.27.7 // indirect
 	github.com/vishvananda/netlink v1.3.1 // indirect
@@ -95,25 +95,25 @@ require (
 	go.opentelemetry.io/otel/trace v1.47.0 // indirect
 	go.yaml.in/yaml/v2 v2.4.5 // indirect
 	go.yaml.in/yaml/v3 v3.0.6 // indirect
-	golang.org/x/crypto v0.58.0 // indirect
-	golang.org/x/mod v0.42.0 // indirect
+	golang.org/x/crypto v0.59.0 // indirect
+	golang.org/x/mod v0.43.0 // indirect
 	golang.org/x/net v0.62.0 // indirect
-	golang.org/x/oauth2 v0.37.0 // indirect
-	golang.org/x/sync v0.24.0 // indirect
-	golang.org/x/sys v0.49.0 // indirect
-	golang.org/x/text v0.43.0 // indirect
+	golang.org/x/oauth2 v0.38.0 // indirect
+	golang.org/x/sync v0.25.0 // indirect
+	golang.org/x/sys v0.50.0 // indirect
+	golang.org/x/text v0.44.0 // indirect
 	golang.org/x/time v0.16.0 // indirect
 	golang.org/x/tools v0.52.0 // indirect
-	google.golang.org/genproto/googleapis/rpc v0.0.0-20261104224025-d1e00e9f33ab // indirect
+	google.golang.org/genproto/googleapis/rpc v0.0.0-20261110000943-09e21b237f2c // indirect
 	google.golang.org/grpc v1.85.0 // indirect
 	google.golang.org/protobuf v1.36.12 // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1 // indirect
 	gopkg.in/validator.v2 v2.0.1 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
-	modernc.org/libc v1.80.1 // indirect
+	modernc.org/libc v1.81.0 // indirect
 	modernc.org/mathutil v1.7.1 // indirect
 	modernc.org/memory v1.12.1 // indirect
-	modernc.org/sqlite v1.61.1 // indirect
+	modernc.org/sqlite v1.62.0 // indirect
 	sigs.k8s.io/yaml v1.6.0 // indirect
 )
 
