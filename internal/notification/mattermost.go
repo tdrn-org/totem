@@ -20,6 +20,7 @@ import (
 	"context"
 	"fmt"
 	"net/url"
+	"time"
 
 	"github.com/mattermost/mattermost/server/public/model"
 	"github.com/tdrn-org/go-notify/mattermost"
@@ -28,6 +29,7 @@ import (
 
 type mattermostParams interface {
 	GetAgent() string
+	GetCooldown() time.Duration
 }
 
 type mattermostTransitionParams struct {
@@ -49,12 +51,17 @@ func (p *mattermostAgentParams) GetAgent() string {
 }
 
 type mattermostMessageParams struct {
-	Agent   string
-	Message string
+	Agent    string
+	Cooldown time.Duration
+	Message  string
 }
 
 func (p *mattermostMessageParams) GetAgent() string {
 	return p.Agent
+}
+
+func (p *mattermostMessageParams) GetCooldown() time.Duration {
+	return p.Cooldown
 }
 
 type mattermostConfig struct {
@@ -70,9 +77,9 @@ func (c *mattermostConfig) GetToken() (string, error) {
 }
 
 func (c *mattermostConfig) ResolveChannelID(ctx context.Context, client *model.Client4, params mattermostParams) (string, error) {
-	user, _, err := client.GetMe(ctx, "")
+	user, err := c.getClientUser(ctx, client)
 	if err != nil {
-		return "", fmt.Errorf("failed to retrieve User (cause: %w)", err)
+		return "", err
 	}
 	agent, _, err := client.GetUserByUsername(ctx, params.GetAgent(), "")
 	if err != nil {
@@ -83,6 +90,47 @@ func (c *mattermostConfig) ResolveChannelID(ctx context.Context, client *model.C
 		return "", fmt.Errorf("failed to create direct channel to Agent %q (cause: %w)", params.GetAgent(), err)
 	}
 	return channel.Id, nil
+}
+
+func (c *mattermostConfig) AuthorizeSend(ctx context.Context, client *model.Client4, channelID string, params mattermostParams) (bool, error) {
+	cooldown := params.GetCooldown()
+	if cooldown <= 0 {
+		return true, nil
+	}
+	user, err := c.getClientUser(ctx, client)
+	if err != nil {
+		return false, err
+	}
+	earliest := time.Now().Add(-cooldown)
+	page := 0
+	for {
+		postList, _, err := client.GetPostsForChannel(ctx, channelID, page, 50, "", false, false)
+		if err != nil {
+			return false, fmt.Errorf("failed to retrieve channel posts (cause: %w)", err)
+		}
+		if len(postList.Order) == 0 {
+			return true, nil
+		}
+		for _, postID := range postList.Order {
+			post := postList.Posts[postID]
+			postCreatedAt := time.UnixMilli(post.CreateAt)
+			if postCreatedAt.Before(earliest) {
+				return true, nil
+			}
+			if post.UserId == user.Id {
+				return false, nil
+			}
+		}
+		page++
+	}
+}
+
+func (c *mattermostConfig) getClientUser(ctx context.Context, client *model.Client4) (*model.User, error) {
+	user, _, err := client.GetMe(ctx, "")
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve User (cause: %w)", err)
+	}
+	return user, nil
 }
 
 func newPayloadFactory(cfg *config.NotifyConfig) (*mattermost.PayloadFactory[mattermostParams], error) {
