@@ -42,11 +42,11 @@ type NotifyProfileConfig struct {
 type NotifyScheduleConfig struct {
 	Agent        string                 `toml:"agent"`
 	Schedule     jobticker.ScheduleSpec `toml:"schedule"`
+	Cooldown     time.Duration          `toml:"cooldown"`
 	Notification string                 `toml:"notification"`
 }
 
 type NotifyMessageConfig struct {
-	Agent    string        `toml:"agent"`
-	Cooldown time.Duration `toml:"cooldown"`
-	Message  string        `toml:"message"`
+	Agent   string `toml:"agent"`
+	Message string `toml:"message"`
 }

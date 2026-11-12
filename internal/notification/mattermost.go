@@ -42,18 +42,26 @@ func (p *mattermostTransitionParams) GetAgent() string {
 	return p.Agent
 }
 
+func (p *mattermostTransitionParams) GetCooldown() time.Duration {
+	return 0
+}
+
 type mattermostAgentParams struct {
-	Agent string
+	Agent    string
+	Cooldown time.Duration
 }
 
 func (p *mattermostAgentParams) GetAgent() string {
 	return p.Agent
 }
 
+func (p *mattermostAgentParams) GetCooldown() time.Duration {
+	return p.Cooldown
+}
+
 type mattermostMessageParams struct {
-	Agent    string
-	Cooldown time.Duration
-	Message  string
+	Agent   string
+	Message string
 }
 
 func (p *mattermostMessageParams) GetAgent() string {
@@ -61,7 +69,7 @@ func (p *mattermostMessageParams) GetAgent() string {
 }
 
 func (p *mattermostMessageParams) GetCooldown() time.Duration {
-	return p.Cooldown
+	return 0
 }
 
 type mattermostConfig struct {

@@ -78,7 +78,8 @@ func (s *Service) NotifySchedules(ctx context.Context, last, now time.Time) erro
 	for _, schedule := range s.cfg.Schedules {
 		if schedule.Schedule.InInterval(last, now) {
 			params := &mattermostAgentParams{
-				Agent: schedule.Agent,
+				Agent:    schedule.Agent,
+				Cooldown: schedule.Cooldown,
 			}
 			payload := s.mattermostPayloads.NewPayload(schedule.Notification)
 			err := payload.Send(ctx, params)
