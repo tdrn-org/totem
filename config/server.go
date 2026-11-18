@@ -17,9 +17,6 @@
 package config
 
 import (
-	"fmt"
-	"log/slog"
-
 	"github.com/tdrn-org/go-config-toml"
 )
 
@@ -43,34 +40,25 @@ const (
 	ServerProtocolHttps ServerProtocol = "https"
 )
 
-var knownServerProtocols map[string]ServerProtocol = map[string]ServerProtocol{
+var serverProtocolMarshalMap map[ServerProtocol]string = map[ServerProtocol]string{
+	ServerProtocolHttp:  string(ServerProtocolHttp),
+	ServerProtocolHttps: string(ServerProtocolHttps),
+}
+
+var serverProtocolUnmarshalMap map[string]ServerProtocol = map[string]ServerProtocol{
 	string(ServerProtocolHttp):  ServerProtocolHttp,
 	string(ServerProtocolHttps): ServerProtocolHttps,
 }
 
-func (p *ServerProtocol) Value() string {
-	for value, protocol := range knownServerProtocols {
-		if *p == protocol {
-			return value
-		}
-	}
-	slog.Warn("unexpected server protocol", slog.Any("p", *p))
-	return ""
+func (p ServerProtocol) MarshalText() ([]byte, error) {
+	return config.MarshalEnum(p, serverProtocolMarshalMap)
 }
 
-func (p *ServerProtocol) MarshalTOML() ([]byte, error) {
-	return []byte(`"` + p.Value() + `"`), nil
-}
-
-func (p *ServerProtocol) UnmarshalTOML(value any) error {
-	protocolString, ok := value.(string)
-	if !ok {
-		return fmt.Errorf("unexpected server protocol type %v", value)
+func (p *ServerProtocol) UnmarshalText(text []byte) error {
+	serverProtocol, err := config.UnmarshalEnum(serverProtocolUnmarshalMap, text)
+	if err != nil {
+		return err
 	}
-	protocol, ok := knownServerProtocols[protocolString]
-	if !ok {
-		return fmt.Errorf("unknown server protocol: %q", protocolString)
-	}
-	*p = protocol
+	*p = serverProtocol
 	return nil
 }
