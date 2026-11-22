@@ -36,15 +36,9 @@ func (s *huebridgeService) ListLights(ctx context.Context) ([]*smarthome.Light, 
 		return nil, fmt.Errorf("failed to get lights from Hue Bridge (cause: %w)", err)
 	}
 	lights := make([]*smarthome.Light, 0, len(response.JSON200.Data))
+	location := s.host.ResolveLocationID(s.config.LocationID())
 	for _, lightResponse := range response.JSON200.Data {
-		light := &smarthome.Light{
-			ID:         lightResponse.Id,
-			Name:       lightResponse.Metadata.Name,
-			On:         lightResponse.On.On,
-			Brightness: brightnessValue(lightResponse.Dimming.Brightness),
-			Location:   s.host.ResolveLocationID(s.config.LocationID()),
-		}
-		lights = append(lights, light)
+		lights = append(lights, toLight(lightResponse, location))
 	}
 	return lights, nil
 }
@@ -62,14 +56,7 @@ func (s *huebridgeService) GetLight(ctx context.Context, id string) (*smarthome.
 	if len(response.JSON200.Data) == 0 {
 		return nil, fmt.Errorf("no light data from Hue Bridge")
 	}
-	lightResponse := response.JSON200.Data[0]
-	light := &smarthome.Light{
-		ID:         lightResponse.Id,
-		Name:       lightResponse.Metadata.Name,
-		On:         lightResponse.On.On,
-		Brightness: brightnessValue(lightResponse.Dimming.Brightness),
-		Location:   s.host.ResolveLocationID(s.config.LocationID()),
-	}
+	light := toLight(response.JSON200.Data[0], s.host.ResolveLocationID(s.config.LocationID()))
 	return light, nil
 }
 
@@ -83,13 +70,7 @@ func (s *huebridgeService) SetLight(ctx context.Context, id string, on *bool, br
 		body.On = &api.On{On: *on}
 	}
 	if brightness != nil {
-		bri := api.Brightness(*brightness) / 100.0
-		if bri <= 0.0 {
-			bri = 0.01
-		}
-		if bri > 1.0 {
-			bri = 1.0
-		}
+		bri := brightnessPayload(*brightness)
 		body.Dimming = &api.Dimming{Brightness: bri}
 	}
 	_, err = bridgeClient.UpdateLight(ctx, id, body)
