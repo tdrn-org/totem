@@ -17,6 +17,8 @@
 package huebridge
 
 import (
+	"math"
+
 	"github.com/tdrn-org/go-hue/api"
 	"github.com/tdrn-org/totem/internal/domain"
 	"github.com/tdrn-org/totem/internal/domain/smarthome"
@@ -42,11 +44,18 @@ func toLight(lightResponse api.LightGet, location *domain.Location) *smarthome.L
 	}
 }
 
+// brightnessValue converts the bridge brightness attribute into the domain
+// brightness. The bridge quantizes its brightness onto a 253 step grid
+// (level = round(1 + percent * 2.53), percent = (level - 1) / 253 * 100), so a
+// light asked to dim to 80% reports back 79.84 and one asked for 56% reports
+// 56.13. The value therefore has to be rounded: truncating would report a
+// brightness up to one full point below what was set, which is exactly the
+// drift this conversion is supposed to avoid.
 func brightnessValue(response *api.Brightness) uint8 {
 	if response == nil {
 		return 0
 	}
-	value := uint8(*response)
+	value := uint8(math.Round(float64(*response)))
 	if value > 100 {
 		value = 100
 	}

@@ -87,11 +87,28 @@ func TestToLightWithDimming(t *testing.T) {
 		"id": "2",
 		"metadata": {"name": "Arbeitszimmer 1"},
 		"on": {"on": true},
-		"dimming": {"brightness": 56.52, "min_dim_level": 0.2}
+		"dimming": {"brightness": 56.13, "min_dim_level": 2.0}
 	}`)
 	converted := toLight(light, nil)
 	if converted.Brightness != 56 {
 		t.Errorf("expected brightness 56, got %d", converted.Brightness)
+	}
+}
+
+// The bridge quantizes brightness onto a 253 step grid, so a light that was
+// asked to dim to 80% reports back 79.84. Truncating that value would report
+// 79% and silently drift one point away from what the user set, so the value
+// has to be rounded.
+func TestToLightRoundsReportedBrightness(t *testing.T) {
+	light := lightFromJSON(t, `{
+		"id": "3",
+		"metadata": {"name": "Arbeitszimmer 4"},
+		"on": {"on": true},
+		"dimming": {"brightness": 79.84, "min_dim_level": 2.0}
+	}`)
+	converted := toLight(light, nil)
+	if converted.Brightness != 80 {
+		t.Errorf("expected brightness 80, got %d", converted.Brightness)
 	}
 }
 
@@ -103,8 +120,16 @@ func TestBrightnessValue(t *testing.T) {
 	}{
 		{name: "nil", response: nil, expected: 0},
 		{name: "zero", response: brightness(0.0), expected: 0},
-		{name: "bridge default", response: brightness(56.52), expected: 56},
+		{name: "below half a point rounds down", response: brightness(0.4), expected: 0},
+		{name: "above half a point rounds up", response: brightness(0.6), expected: 1},
+		// Grid values measured against a real bridge: asking for 30, 56 and 80
+		// percent yields exactly these reported brightnesses.
+		{name: "grid value for 30 percent", response: brightness(30.04), expected: 30},
+		{name: "grid value for 56 percent", response: brightness(56.13), expected: 56},
+		{name: "grid value for 80 percent", response: brightness(79.84), expected: 80},
+		{name: "grid value without integer nominal", response: brightness(56.52), expected: 57},
 		{name: "full", response: brightness(100.0), expected: 100},
+		{name: "just below full", response: brightness(99.84), expected: 100},
 		{name: "out of range", response: brightness(150.0), expected: 100},
 	}
 	for _, test := range tests {
